@@ -7,6 +7,7 @@ import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
 import { Cargo } from "./engine/Cargo";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
 
@@ -47,27 +48,27 @@ const joint = RAPIER.JointData.spring(
 //getWorld().createImpulseJoint(joint, car.body, cargo.body, true);
 
 // add a front indicator
-const nose = new THREE.Mesh(
-  new THREE.SphereGeometry(0.3, 8, 8),
-  new THREE.MeshStandardMaterial({ color: 0xeedc5b })
-);
-// position it at the front of the ship (-Z in local space)
-nose.position.set(0, 0, -1.2);
-// point it forward
-nose.rotation.x = Math.PI / 2;
-car.mesh.add(nose);
+// const nose = new THREE.Mesh(
+//   new THREE.SphereGeometry(0.3, 8, 8),
+//   new THREE.MeshStandardMaterial({ color: 0xeedc5b })
+// );
+// // position it at the front of the ship (-Z in local space)
+// nose.position.set(0, 0, -1.2);
+// // point it forward
+// nose.rotation.x = Math.PI / 2;
+// car.mesh.add(nose);
 
-const engine = new THREE.Mesh(
-  new THREE.ConeGeometry(0.2, 0.6, 8),
-  new THREE.MeshStandardMaterial({ color: 0xff0000 })
-);
+// const engine = new THREE.Mesh(
+//   new THREE.ConeGeometry(0.2, 0.6, 8),
+//   new THREE.MeshStandardMaterial({ color: 0xff0000 })
+// );
 // position it at the front of the ship (-Z in local space)
-engine.position.set(0, 0, 1.2);
-// point it backwards (towards +Z)
-engine.rotation.y = Math.PI;
-// align cone so it "points out" properly
-engine.rotation.x = -Math.PI / 2;
-car.mesh.add(engine);
+// engine.position.set(0, 0, 1.2);
+// // point it backwards (towards +Z)
+// engine.rotation.y = Math.PI;
+// // align cone so it "points out" properly
+// engine.rotation.x = -Math.PI / 2;
+// car.mesh.add(engine);
 
 // asteroids
 const asteroidGenerator = new AsteroidGenerator(scene);
@@ -97,4 +98,8 @@ function animate() {
   debugOverlay.update(car.mesh, car.visual);
 
   renderer.render(scene, camera);
+}
+
+function onLoadedPlayerModel(value: any): ((value: import("three/examples/jsm/loaders/GLTFLoader.js").GLTF) => import("three/examples/jsm/loaders/GLTFLoader.js").GLTF | PromiseLike<import("three/examples/jsm/loaders/GLTFLoader.js").GLTF>) | null | undefined {
+  throw new Error("Function not implemented.");
 }

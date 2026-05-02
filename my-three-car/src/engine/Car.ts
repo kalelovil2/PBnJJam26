@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld } from "../physics";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export class Car {
   static FORWARD_Z = -1;
@@ -17,11 +18,13 @@ export class Car {
     // -------------------------
     this.mesh = new THREE.Group();
     this.visual = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 0.5, 2),
-      new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+      //new THREE.BoxGeometry(1, 0.5, 2),
+      //new THREE.MeshStandardMaterial({ color: 0x00ff00 })
     );
     this.mesh.add(this.visual);
     scene.add(this.mesh);
+
+    loadModel(scene, this.mesh);
 
     // -------------------------
     // Physics body
@@ -141,4 +144,19 @@ export class Car {
       0.1
     );
   }
+}
+
+async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE.Group<THREE.Object3DEventMap>) 
+{
+  const loader = new GLTFLoader();
+
+    await loader.loadAsync("/player_v01.glb").then((glb) => {
+      const model = glb.scene;
+      model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
+      model.position.set(0, 0, 0);    // Adjust model position
+      model.rotation.set(0, 0, 0);
+      model.rotation.y = Math.PI; 
+      scene.add(model);
+      mesh.add(model);
+    });
 }
