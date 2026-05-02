@@ -26,6 +26,29 @@ scene.add(ambient);
 // car
 const car = new Car(scene);
 
+// add a front indicator
+const nose = new THREE.Mesh(
+  new THREE.SphereGeometry(0.3, 8, 8),
+  new THREE.MeshStandardMaterial({ color: 0xeedc5b })
+);
+// position it at the front of the ship (-Z in local space)
+nose.position.set(0, 0, -1.2);
+// point it forward
+nose.rotation.x = Math.PI / 2;
+car.mesh.add(nose);
+
+const engine = new THREE.Mesh(
+  new THREE.ConeGeometry(0.2, 0.6, 8),
+  new THREE.MeshStandardMaterial({ color: 0xff0000 })
+);
+// position it at the front of the ship (-Z in local space)
+engine.position.set(0, 0, 1.2);
+// point it backwards (towards +Z)
+engine.rotation.y = Math.PI;
+// align cone so it "points out" properly
+engine.rotation.x = -Math.PI / 2;
+car.mesh.add(engine);
+
 // asteroids
 const asteroids = createAsteroids();
 
