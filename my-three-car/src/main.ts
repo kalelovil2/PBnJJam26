@@ -60,7 +60,7 @@ car.mesh.add(engine);
 
 // asteroids
 const asteroidGenerator = new AsteroidGenerator(scene);
-const asteroids = asteroidGenerator.createAsteroids();
+const asteroids = asteroidGenerator.createAsteroids(96);
 
 // camera position (top-down-ish)
 camera.position.set(0, 10, 10);
