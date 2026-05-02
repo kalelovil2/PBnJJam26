@@ -1,5 +1,4 @@
 const input = new Input();
-const world = new World(scene);
 const car = new Car(scene, input);
 const cameraController = new GameCamera(camera);
 

@@ -1,23 +1,19 @@
 import * as THREE from "three";
+import RAPIER from "@dimforge/rapier3d-compat";
+import { getWorld } from "../physics";
 
 export class Car {
   static FORWARD_Z = -1;
 
   mesh: THREE.Mesh;
-
-  rotationSpeed = 0.05;
-
-  velocityForward = 0;
-  velocityStrafe = 0;
-
-  angularVelocity = 0;
-  maxTurnSpeed = 0.03;
-  turnAccel = 0.0025;
-  turnFriction = 0.9;
+  body: RAPIER.RigidBody;
 
   keys: Record<string, boolean> = {};
 
   constructor(scene: THREE.Scene) {
+    // -------------------------
+    // Visual mesh
+    // -------------------------
     this.mesh = new THREE.Mesh(
       new THREE.BoxGeometry(1, 0.5, 2),
       new THREE.MeshStandardMaterial({ color: 0x00ff00 })
@@ -25,50 +21,97 @@ export class Car {
 
     scene.add(this.mesh);
 
-    window.addEventListener("keydown", (e) => (this.keys[e.key.toLowerCase()] = true));
-    window.addEventListener("keyup", (e) => (this.keys[e.key.toLowerCase()] = false));
+    // -------------------------
+    // Physics body
+    // -------------------------
+    const world = getWorld();
+
+    const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(0, 2, 0)
+      .setLinearDamping(0.6)   // prevents endless sliding
+      .setAngularDamping(2.0)  // stabilises rotation
+      .setCanSleep(false);
+
+    this.body = world.createRigidBody(bodyDesc);
+
+    const collider = RAPIER.ColliderDesc.cuboid(0.5, 0.25, 1);
+    world.createCollider(collider, this.body);
+
+    // -------------------------
+    // Input
+    // -------------------------
+    window.addEventListener("keydown", (e) => {
+      this.keys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener("keyup", (e) => {
+      this.keys[e.key.toLowerCase()] = false;
+    });
   }
 
   update() {
-    const accel = 0.01;
-    const friction = 0.92;
+    const thrust = 0.04;
+    const turnTorque = 0.01;
 
-    // Rotation (A/D)
-    if (this.keys["a"]) this.angularVelocity += this.turnAccel;
-    if (this.keys["d"]) this.angularVelocity -= this.turnAccel;
-    // clamp max turn speed
-    this.angularVelocity = THREE.MathUtils.clamp(
-      this.angularVelocity,
-      -this.maxTurnSpeed,
-      this.maxTurnSpeed
-    );
+    // current orientation
+    const rot = this.body.rotation();
+    const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
 
-    // apply damping
-    this.angularVelocity *= this.turnFriction;
+    const forward = new THREE.Vector3(0, 0, Car.FORWARD_Z).applyQuaternion(quat);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quat);
 
-    // apply rotation
-    this.mesh.rotation.y += this.angularVelocity;
-    this.mesh.rotation.z = -this.angularVelocity * 2.5;
+    // -------------------------
+    // THRUST (W/S)
+    // -------------------------
+    if (this.keys["w"]) {
+      this.body.applyImpulse(
+        { x: forward.x * thrust, y: 0, z: forward.z * thrust },
+        false
+      );
+    }
 
-    // Forward / backward thrust (W/S)
-    if (this.keys["w"]) this.velocityForward += accel;
-    if (this.keys["s"]) this.velocityForward -= accel;
+    if (this.keys["s"]) {
+      this.body.applyImpulse(
+        { x: -forward.x * thrust, y: 0, z: -forward.z * thrust },
+        false
+      );
+    }
 
-    // Strafe (Q/E)
-    if (this.keys["q"]) this.velocityStrafe += accel;
-    if (this.keys["e"]) this.velocityStrafe -= accel;
+    // -------------------------
+    // STRAFE (Q/E)
+    // -------------------------
+    if (this.keys["q"]) {
+      this.body.applyImpulse(
+        { x: -right.x * thrust, y: 0, z: -right.z * thrust },
+        false
+      );
+    }
 
-    // Apply friction
-    this.velocityForward *= friction;
-    this.velocityStrafe *= friction;
+    if (this.keys["e"]) {
+      this.body.applyImpulse(
+        { x: right.x * thrust, y: 0, z: right.z * thrust },
+        false
+      );
+    }
 
-    const forwardLocal = new THREE.Vector3(0, 0, Car.FORWARD_Z);
-    const rightLocal = new THREE.Vector3(1, 0, 0);
+    // -------------------------
+    // TURNING (A/D)
+    // -------------------------
+    if (this.keys["a"]) {
+      this.body.applyTorqueImpulse({ x: 0, y: turnTorque, z: 0 }, false);
+    }
 
-    const forward = forwardLocal.applyQuaternion(this.mesh.quaternion);
-    const right = rightLocal.applyQuaternion(this.mesh.quaternion);
+    if (this.keys["d"]) {
+      this.body.applyTorqueImpulse({ x: 0, y: -turnTorque, z: 0 }, false);
+    }
 
-    this.mesh.position.addScaledVector(forward, this.velocityForward);
-    this.mesh.position.addScaledVector(right, this.velocityStrafe);
+    // -------------------------
+    // SYNC VISUAL → PHYSICS
+    // -------------------------
+    const pos = this.body.translation();
+    const r = this.body.rotation();
+
+    this.mesh.position.set(pos.x, pos.y, pos.z);
+    this.mesh.quaternion.set(r.x, r.y, r.z, r.w);
   }
 }

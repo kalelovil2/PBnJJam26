@@ -2,8 +2,12 @@ import * as THREE from "three";
 
 import { Car } from "./engine/Car";
 import { rand } from "three/tsl";
+import RAPIER from "@dimforge/rapier3d-compat";
+import { getWorld, initPhysics, stepPhysics } from "./physics";
 
 const scene = new THREE.Scene();
+
+await initPhysics();
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -63,64 +67,111 @@ function createAsteroids()
   {
     const radius = 0.6 + Math.random() * 1.25;
 
-    const asteroid = createAsteroid(
-      radius,
+    const mesh = createAsteroidMesh(
+            radius,
       0.08 + Math.random() * 0.15, // roughness
       1 + Math.random() * 3       // detail
     );
-
-    asteroid.position.set(
+    mesh.position.set(
       (Math.random() - 0.5) * 100,
       (Math.random() - 0.5) * 10,
       (Math.random() - 0.5) * 100
     );
+    scene.add(mesh);
 
-    scene.add(asteroid);
+    const startingRotation = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.3
+    );
+
+    const startingDrift = new THREE.Vector3(
+      (Math.random() - 0.5) * 1.25,
+      0,
+      (Math.random() - 0.5) * 1.25
+    );
+    const body = createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
     asteroids.push({
-      mesh: asteroid,
-
-      rotationSpeed: {
-        x: (Math.random() - 0.5) * 0.004,
-        y: (Math.random() - 0.5) * 0.004,
-        z: (Math.random() - 0.5) * 0.004
-      },
-
-      drift: new THREE.Vector3(
-        (Math.random() - 0.5) * 0.01,
-        (Math.random() - 0.5) * 0.003,
-        (Math.random() - 0.5) * 0.01
-      )
+      mesh: mesh,
+      body: body,
     });
   }
 
   return asteroids;
 }
 
+animate();
+
 function animate() {
   requestAnimationFrame(animate);
 
   car.update();
 
-  // simple follow camera
   camera.position.x = car.mesh.position.x;
   camera.position.z = car.mesh.position.z + 10;
   camera.lookAt(car.mesh.position);
 
-  renderer.render(scene, camera);
+  // 2. STEP physics
+  stepPhysics();
 
-  for (const asteroid of asteroids) {
-    asteroid.mesh.rotation.x += asteroid.rotationSpeed.x;
-    asteroid.mesh.rotation.y += asteroid.rotationSpeed.y;
-    asteroid.mesh.rotation.z += asteroid.rotationSpeed.z;
+  // 3. SYNC results to visuals
+  for (const a of asteroids) {
+    const pos = a.body.translation();
+    const rot = a.body.rotation();
 
-    asteroid.mesh.position.add(asteroid.drift);
+    a.mesh.position.set(pos.x, pos.y, pos.z);
+    a.mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w);
   }
+
+  renderer.render(scene, camera);
 }
 
-animate();
+function createAsteroidPhysics(position: { x: any; y: any; z: any; }, radius = 1, 
+  startingRotation = new THREE.Vector3, startingDrift = new THREE.Vector3
 
-function createAsteroid(
+) {
+  const world = getWorld();
+
+const q = new THREE.Quaternion().setFromEuler(
+  new THREE.Euler(
+    Math.random() * Math.PI,
+    Math.random() * Math.PI,
+    Math.random() * Math.PI
+  )
+);
+
+  // rigid body
+  const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+  .setTranslation(position.x, position.y, position.z)
+  .setRotation(q)
+  .setLinearDamping(0)
+  .setAngularDamping(0)
+  .setCanSleep(false);
+
+  const body = world.createRigidBody(bodyDesc);
+  body.setLinvel(
+  { x: startingDrift.x, y: startingDrift.y, z: startingDrift.z },
+  false
+);
+body.setAngvel(
+  { x: startingRotation.x, y: startingRotation.y, z: startingRotation.z },
+  false
+);
+
+  body.wakeUp();
+
+  // collider (sphere is best for asteroids)
+  const colliderDesc = RAPIER.ColliderDesc
+    .ball(radius)
+    .setMass(1);
+
+  world.createCollider(colliderDesc, body);
+
+  return body;
+}
+
+function createAsteroidMesh(
   radius = 1,
   roughness = 0.5,
   detail = 3
