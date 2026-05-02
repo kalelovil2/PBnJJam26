@@ -4,6 +4,7 @@ import { Car } from "./engine/Car";
 import { rand } from "three/tsl";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld, initPhysics, stepPhysics } from "./physics";
+import { DebugOverlay } from "./engine/DebugOverlay";
 
 const scene = new THREE.Scene();
 
@@ -19,6 +20,9 @@ const camera = new THREE.PerspectiveCamera(
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+// Debug Display
+const debugOverlay = new DebugOverlay();
 
 // light
 const light = new THREE.DirectionalLight(0xffffff, 0.7);
@@ -123,6 +127,8 @@ function animate() {
     a.mesh.position.set(pos.x, pos.y, pos.z);
     a.mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w);
   }
+
+  debugOverlay.update(car.mesh, car.visual);
 
   renderer.render(scene, camera);
 }

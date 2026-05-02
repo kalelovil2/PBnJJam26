@@ -29,7 +29,6 @@ export class Car {
     const world = getWorld();
 
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(0, 2, 0)
       .setLinearDamping(0.6)   // prevents endless sliding
       .setAngularDamping(2.0)  // stabilises rotation
       .setCanSleep(false)
