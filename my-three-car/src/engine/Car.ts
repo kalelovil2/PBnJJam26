@@ -5,7 +5,8 @@ import { getWorld } from "../physics";
 export class Car {
   static FORWARD_Z = -1;
 
-  mesh: THREE.Mesh;
+  mesh: THREE.Group;
+  visual: THREE.Mesh;
   body: RAPIER.RigidBody;
 
   keys: Record<string, boolean> = {};
@@ -14,11 +15,12 @@ export class Car {
     // -------------------------
     // Visual mesh
     // -------------------------
-    this.mesh = new THREE.Mesh(
+    this.mesh = new THREE.Group();
+    this.visual = new THREE.Mesh(
       new THREE.BoxGeometry(1, 0.5, 2),
       new THREE.MeshStandardMaterial({ color: 0x00ff00 })
     );
-
+    this.mesh.add(this.visual);
     scene.add(this.mesh);
 
     // -------------------------
@@ -114,5 +116,30 @@ export class Car {
 
     this.mesh.position.set(pos.x, pos.y, pos.z);
     this.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+
+
+    // FAKE BODY ROLL/PITCH
+    const angVel = this.body.angvel();
+
+    const targetRoll = -angVel.y * 0.25;
+
+    // smooth interpolation
+    this.visual.rotation.z = THREE.MathUtils.lerp(
+      this.visual.rotation.z,
+      targetRoll,
+      0.15
+    );
+
+    const vel = this.body.linvel();
+    const forwardSpeed =
+      vel.x * forward.x +
+      vel.z * forward.z;
+    const targetPitch = forwardSpeed * 0.05;
+
+    this.visual.rotation.x = THREE.MathUtils.lerp(
+      this.visual.rotation.x,
+      targetPitch,
+      0.1
+    );
   }
 }
