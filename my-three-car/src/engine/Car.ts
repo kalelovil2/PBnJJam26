@@ -11,7 +11,7 @@ export class Car {
 
   keys: Record<string, boolean> = {};
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, position: THREE.Vector3) {
     // -------------------------
     // Visual mesh
     // -------------------------
@@ -52,8 +52,8 @@ export class Car {
   }
 
   update() {
-    const thrust = 0.04;
-    const turnTorque = 0.01;
+    const thrust = 0.05;
+    const turnTorque = 0.01125;
 
     // current orientation
     const rot = this.body.rotation();

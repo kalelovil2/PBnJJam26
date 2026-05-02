@@ -6,6 +6,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
+import { Cargo } from "./engine/Cargo";
 
 const scene = new THREE.Scene();
 
@@ -33,7 +34,17 @@ const ambient = new THREE.AmbientLight(0xffffff, 0.01);
 scene.add(ambient);
 
 // car
-const car = new Car(scene);
+const car = new Car(scene, new THREE.Vector3(0, 0, -4));
+const cargo = new Cargo(scene, new THREE.Vector3(0, 0, 2.5));
+const joint = RAPIER.JointData.spring(
+  0.25,   // rest length (distance between ship and cargo)
+  80.0,  // stiffness (higher = tighter connection)
+  80.0,   // damping (higher = less swing / jackknife)
+  new RAPIER.Vector3(0, 0, 1.5),
+  new RAPIER.Vector3(0, 0, -1)
+);
+
+//getWorld().createImpulseJoint(joint, car.body, cargo.body, true);
 
 // add a front indicator
 const nose = new THREE.Mesh(
@@ -71,6 +82,7 @@ function animate() {
   requestAnimationFrame(animate);
 
   car.update();
+  cargo.sync();
 
   camera.position.x = car.mesh.position.x;
   camera.position.z = car.mesh.position.z + 10;
