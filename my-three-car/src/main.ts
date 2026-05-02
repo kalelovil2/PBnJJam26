@@ -164,7 +164,7 @@ body.setAngvel(
   // collider (sphere is best for asteroids)
   const colliderDesc = RAPIER.ColliderDesc
     .ball(radius)
-    .setMass(1);
+    .setMass(5 * radius);
 
   world.createCollider(colliderDesc, body);
 
