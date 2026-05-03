@@ -6,6 +6,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
+import { CheckpointGenerator } from "./engine/CheckpointGenerator.ts";
 import { Cargo } from "./engine/Cargo";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -72,7 +73,16 @@ const joint = RAPIER.JointData.spring(
 
 // asteroids
 const asteroidGenerator = new AsteroidGenerator(scene);
-const asteroids = asteroidGenerator.createAsteroids(96);
+const asteroids = asteroidGenerator.createAsteroids(80);
+
+// checkpoints
+const checkpoints =
+  await CheckpointGenerator.spawnCheckpoints(
+    scene,
+    getWorld(),
+    10,   // number of checkpoints
+    100   // level radius
+  );
 
 // camera position (top-down-ish)
 camera.position.set(0, 10, 10);
