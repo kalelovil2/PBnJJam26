@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld } from "../physics";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-export class Car {
+export class Ship {
   static FORWARD_Z = -1;
 
   mesh: THREE.Group;
@@ -74,7 +74,7 @@ export class Car {
     const rot = this.body.rotation();
     const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
 
-    const forward = new THREE.Vector3(0, 0, Car.FORWARD_Z).applyQuaternion(quat);
+    const forward = new THREE.Vector3(0, 0, Ship.FORWARD_Z).applyQuaternion(quat);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quat);
 
     // -------------------------
@@ -185,7 +185,7 @@ export class Car {
       const forward = new THREE.Vector3(
         0,
         0,
-        Car.FORWARD_Z
+        Ship.FORWARD_Z
       ).applyQuaternion(this.mesh.quaternion);
 
       // signed forward speed

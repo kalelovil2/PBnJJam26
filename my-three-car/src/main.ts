@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { Car } from "./engine/Car";
+import { Ship } from "./engine/Ship.ts";
 import { rand } from "three/tsl";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld, initPhysics, stepPhysics } from "./physics";
@@ -35,8 +35,8 @@ scene.add(light);
 const ambient = new THREE.AmbientLight(0xffffff, 0.01);
 scene.add(ambient);
 
-// car
-const car = new Car(scene, new THREE.Vector3(0, 0, -4));
+// ship
+const ship = new Ship(scene, new THREE.Vector3(0, 0, -4));
 const cargo = new Cargo(scene, new THREE.Vector3(0, 0, 2.5));
 const joint = RAPIER.JointData.spring(
   0.25,   // rest length (distance between ship and cargo)
@@ -46,7 +46,7 @@ const joint = RAPIER.JointData.spring(
   new RAPIER.Vector3(0, 0, -1)
 );
 
-//getWorld().createImpulseJoint(joint, car.body, cargo.body, true);
+//getWorld().createImpulseJoint(joint, ship.body, cargo.body, true);
 
 // add a front indicator
 // const nose = new THREE.Mesh(
@@ -57,7 +57,7 @@ const joint = RAPIER.JointData.spring(
 // nose.position.set(0, 0, -1.2);
 // // point it forward
 // nose.rotation.x = Math.PI / 2;
-// car.mesh.add(nose);
+// ship.mesh.add(nose);
 
 // const engine = new THREE.Mesh(
 //   new THREE.ConeGeometry(0.2, 0.6, 8),
@@ -69,7 +69,7 @@ const joint = RAPIER.JointData.spring(
 // engine.rotation.y = Math.PI;
 // // align cone so it "points out" properly
 // engine.rotation.x = -Math.PI / 2;
-// car.mesh.add(engine);
+// ship.mesh.add(engine);
 
 // asteroids
 const asteroidGenerator = new AsteroidGenerator(scene);
@@ -92,7 +92,7 @@ animate();
 function animate() {
   requestAnimationFrame(animate);
 
-  car.update();
+  ship.update();
   cargo.sync();
 
   stepPhysics();
@@ -101,11 +101,11 @@ function animate() {
     a.syncFromPhysics();
   }
 
-  debugOverlay.update(car.mesh, car.visual);
+  debugOverlay.update(ship.mesh, ship.visual);
 
   renderer.render(scene, camera);
 
-  car.updateCamera(camera);
+  ship.updateCamera(camera);
 }
 
 function onLoadedPlayerModel(value: any): ((value: import("three/examples/jsm/loaders/GLTFLoader.js").GLTF) => import("three/examples/jsm/loaders/GLTFLoader.js").GLTF | PromiseLike<import("three/examples/jsm/loaders/GLTFLoader.js").GLTF>) | null | undefined {
