@@ -10,6 +10,11 @@ import { CheckpointGenerator } from "./engine/CheckpointGenerator.ts";
 import { Cargo } from "./engine/Cargo";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+export const ASTEROID_FIELD_RADIUS = 100;
+export const ASTEROID_SAFE_RADIUS = 15;
+const ASTEROID_COUNT = 280;
+export const PLAYER_START = new THREE.Vector3(0, 0, -4);
+
 const scene = new THREE.Scene();
 
 await initPhysics();
@@ -36,7 +41,7 @@ const ambient = new THREE.AmbientLight(0xffffff, 0.01);
 scene.add(ambient);
 
 // ship
-const ship = new Ship(scene, new THREE.Vector3(0, 0, -4));
+const ship = new Ship(scene, PLAYER_START);
 const cargo = new Cargo(scene, new THREE.Vector3(0, 0, 2.5));
 const joint = RAPIER.JointData.spring(
   0.25,   // rest length (distance between ship and cargo)
@@ -48,38 +53,16 @@ const joint = RAPIER.JointData.spring(
 
 getWorld().createImpulseJoint(joint, ship.body, cargo.body, true);
 
-// add a front indicator
-// const nose = new THREE.Mesh(
-//   new THREE.SphereGeometry(0.3, 8, 8),
-//   new THREE.MeshStandardMaterial({ color: 0xeedc5b })
-// );
-// // position it at the front of the ship (-Z in local space)
-// nose.position.set(0, 0, -1.2);
-// // point it forward
-// nose.rotation.x = Math.PI / 2;
-// ship.mesh.add(nose);
-
-// const engine = new THREE.Mesh(
-//   new THREE.ConeGeometry(0.2, 0.6, 8),
-//   new THREE.MeshStandardMaterial({ color: 0xff0000 })
-// );
-// position it at the front of the ship (-Z in local space)
-// engine.position.set(0, 0, 1.2);
-// // point it backwards (towards +Z)
-// engine.rotation.y = Math.PI;
-// // align cone so it "points out" properly
-// engine.rotation.x = -Math.PI / 2;
-// ship.mesh.add(engine);
-
 // asteroids
 const asteroidGenerator = new AsteroidGenerator(scene);
-const asteroids = asteroidGenerator.createAsteroids(160);
+const asteroids = asteroidGenerator.createAsteroids(ASTEROID_COUNT);
 
 // checkpoints
 const checkpoints =
   await CheckpointGenerator.spawnCheckpoints(
     scene,
     getWorld(),
+    asteroids,
     10,   // number of checkpoints
     100   // level radius
   );

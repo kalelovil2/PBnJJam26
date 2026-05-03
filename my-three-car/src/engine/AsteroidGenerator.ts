@@ -2,9 +2,12 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld } from "../physics";
 import { Asteroid } from "./Asteroid";
+import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "../main";
 
 export class AsteroidGenerator {
     scene: THREE.Scene;
+
+    asteroidPositions: THREE.Vector3[] = [];
 
     constructor(scene: THREE.Scene) {
         this.scene = scene;
@@ -23,11 +26,24 @@ export class AsteroidGenerator {
             );
            const planeY = sampleAsteroidY();
 
-            mesh.position.set(
-                (Math.random() - 0.5) * 100,
-                planeY,
-                (Math.random() - 0.5) * 100
-            );
+            const minPlayerDistance = 12;
+
+            var position: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+            let valid = false;
+
+            while (!valid) {
+                position = new THREE.Vector3(
+                    (Math.random() - 0.5) * ASTEROID_FIELD_RADIUS * 2,
+                    planeY,
+                    (Math.random() - 0.5) * ASTEROID_FIELD_RADIUS * 2
+                );
+
+                valid =
+                    position.distanceTo(PLAYER_START) >
+                    minPlayerDistance;
+            }
+
+            mesh.position.set(position.x, position.y, position.z);
             this.scene.add(mesh);
 
             const startingRotation = new THREE.Vector3(
@@ -44,6 +60,8 @@ export class AsteroidGenerator {
 
             const body = this.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
+            this.asteroidPositions.push(mesh.position.clone());
+            
             asteroids.push(new Asteroid(mesh, body, planeY));
         }
 
