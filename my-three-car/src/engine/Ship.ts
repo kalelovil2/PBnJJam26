@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { getWorld } from "../physics";
+import { ThrusterParticle } from "./ThrusterParticle";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export class Ship {
@@ -15,13 +16,15 @@ export class Ship {
   mainForwardLeft: THREE.Mesh;
   mainForwardRight: THREE.Mesh;
 
-mainReverse: THREE.Mesh;
+  mainReverse: THREE.Mesh;
 
-leftFront: THREE.Mesh;
-leftRear: THREE.Mesh;
+  leftFront: THREE.Mesh;
+  leftRear: THREE.Mesh;
 
-rightFront: THREE.Mesh;
-rightRear: THREE.Mesh;
+  rightFront: THREE.Mesh;
+  rightRear: THREE.Mesh;
+
+  particles: ThrusterParticle[] = [];
 
   cameraMode = 0;
 
@@ -76,7 +79,7 @@ rightRear: THREE.Mesh;
     window.addEventListener("keyup", (e) => {
       this.keys[e.key.toLowerCase()] = false;
     });
-    
+
     window.addEventListener("keydown", (e) => {
       const key = e.key.toLowerCase();
 
@@ -89,71 +92,71 @@ rightRear: THREE.Mesh;
 
 
 
-const mat = new THREE.MeshStandardMaterial({
-  color: 0xff4400,
-  emissive: 0xff2200,
-  emissiveIntensity: 0,
-});
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xff4400,
+      emissive: 0xff2200,
+      emissiveIntensity: 0,
+    });
 
-// MAIN FORWARD
-this.mainForwardLeft = this.createThruster(mat, true);
-this.mainForwardRight = this.createThruster(mat, true);
-this.mainForwardLeft.position.set(-0.325, 0, 0.75);
-this.mainForwardRight.position.set(0.325, 0, 0.75);
+    // MAIN FORWARD
+    this.mainForwardLeft = this.createThruster(mat, true);
+    this.mainForwardRight = this.createThruster(mat, true);
+    this.mainForwardLeft.position.set(-0.325, 0, 0.75);
+    this.mainForwardRight.position.set(0.325, 0, 0.75);
 
-this.mainForwardLeft.rotation.x = -Math.PI / 2;
-this.mainForwardRight.rotation.x = -Math.PI / 2;
-this.mesh.add(this.mainForwardLeft);
-this.mesh.add(this.mainForwardRight);
+    this.mainForwardLeft.rotation.x = -Math.PI / 2;
+    this.mainForwardRight.rotation.x = -Math.PI / 2;
+    this.mesh.add(this.mainForwardLeft);
+    this.mesh.add(this.mainForwardRight);
 
-// MAIN REVERSE (optional small retro thruster at front)
-this.mainReverse = this.createThruster(mat);
-this.mainReverse.position.set(0, 0, -0.8);
+    // MAIN REVERSE (optional small retro thruster at front)
+    this.mainReverse = this.createThruster(mat);
+    this.mainReverse.position.set(0, 0, -0.8);
 
-this.mainReverse.rotation.x = Math.PI / 2;
-this.mesh.add(this.mainReverse);
+    this.mainReverse.rotation.x = Math.PI / 2;
+    this.mesh.add(this.mainReverse);
 
-// LEFT SIDE PAIR
-this.leftFront = this.createThruster(mat);
-this.leftRear = this.createThruster(mat);
+    // LEFT SIDE PAIR
+    this.leftFront = this.createThruster(mat);
+    this.leftRear = this.createThruster(mat);
 
-this.leftFront.position.set(-0.375, 0, -0.5);
-this.leftRear.position.set(-0.5, 0, 0.6);
+    this.leftFront.position.set(-0.375, 0, -0.5);
+    this.leftRear.position.set(-0.5, 0, 0.6);
 
-this.leftFront.rotation.z = -Math.PI / 2;
-this.leftRear.rotation.z = -Math.PI / 2;
+    this.leftFront.rotation.z = -Math.PI / 2;
+    this.leftRear.rotation.z = -Math.PI / 2;
 
-this.mesh.add(this.leftFront);
-this.mesh.add(this.leftRear);
+    this.mesh.add(this.leftFront);
+    this.mesh.add(this.leftRear);
 
-// RIGHT SIDE PAIR
-this.rightFront = this.createThruster(mat);
-this.rightRear = this.createThruster(mat);
+    // RIGHT SIDE PAIR
+    this.rightFront = this.createThruster(mat);
+    this.rightRear = this.createThruster(mat);
 
-this.rightFront.position.set(0.375, 0, -0.5);
-this.rightRear.position.set(0.5, 0, 0.6);
+    this.rightFront.position.set(0.375, 0, -0.5);
+    this.rightRear.position.set(0.5, 0, 0.6);
 
-// face right (+X)w
-this.rightFront.rotation.z = Math.PI / 2;
-this.rightRear.rotation.z = Math.PI / 2;
+    // face right (+X)w
+    this.rightFront.rotation.z = Math.PI / 2;
+    this.rightRear.rotation.z = Math.PI / 2;
 
-this.mesh.add(this.rightFront);
-this.mesh.add(this.rightRear);
+    this.mesh.add(this.rightFront);
+    this.mesh.add(this.rightRear);
   }
 
   update() {
 
     const reset = (m: THREE.Mesh) => {
-  (m.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
-};
+      (m.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+    };
 
-reset(this.mainForwardLeft);
-reset(this.mainForwardRight);
-reset(this.mainReverse);
-reset(this.leftFront);
-reset(this.leftRear);
-reset(this.rightFront);
-reset(this.rightRear);
+    reset(this.mainForwardLeft);
+    reset(this.mainForwardRight);
+    reset(this.mainReverse);
+    reset(this.leftFront);
+    reset(this.leftRear);
+    reset(this.rightFront);
+    reset(this.rightRear);
 
     const thrust = 0.05;
     const turnTorque = 0.01125;
@@ -169,53 +172,71 @@ reset(this.rightRear);
     // THRUST (W/S)
     // -------------------------
 
-if (this.keys["w"]) {
-  this.body.applyImpulse({ x: forward.x * thrust, y: 0, z: forward.z * thrust }, false);
+    if (this.keys["w"]) {
+      this.body.applyImpulse({ x: forward.x * thrust, y: 0, z: forward.z * thrust }, false);
 
-  (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
-  (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
-}
+      (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+      (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
 
-if (this.keys["s"]) {
-  this.body.applyImpulse({ x: -forward.x * thrust, y: 0, z: -forward.z * thrust }, false);
+      this.spawnThrusterParticles(this.mainForwardLeft, 4, 0.1);
+      this.spawnThrusterParticles(this.mainForwardRight, 4, 0.1);
+    }
 
-  (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-}
+    if (this.keys["s"]) {
+      this.body.applyImpulse({ x: -forward.x * thrust, y: 0, z: -forward.z * thrust }, false);
+
+      (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+
+      this.spawnThrusterParticles(this.mainReverse, 2, 0.06);
+    }
 
     // -------------------------
     // STRAFE (Q/E)
     // -------------------------
 
     if (this.keys["q"]) {
-  this.body.applyImpulse({ x: -right.x * thrust, y: 0, z: -right.z * thrust }, false);
+      this.body.applyImpulse({ x: -right.x * thrust, y: 0, z: -right.z * thrust }, false);
 
-  (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-  (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-}
+      (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+      (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
 
-if (this.keys["e"]) {
-  this.body.applyImpulse({ x: right.x * thrust, y: 0, z: right.z * thrust }, false);
+      this.spawnThrusterParticles(this.rightFront, 2, 0.05);
+      this.spawnThrusterParticles(this.rightRear, 2, 0.05);
+    }
 
-  (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-  (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-}
+    if (this.keys["e"]) {
+      this.body.applyImpulse({ x: right.x * thrust, y: 0, z: right.z * thrust }, false);
+
+      (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+      (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+
+      this.spawnThrusterParticles(this.leftFront, 2, 0.05);
+      this.spawnThrusterParticles(this.leftRear, 2, 0.05);
+    }
 
     // -------------------------
     // TURNING (A/D)
     // -------------------------
-if (this.keys["a"]) {
-  this.body.applyTorqueImpulse({ x: 0, y: turnTorque, z: 0 }, false);
+    if (this.keys["a"]) {
+      this.body.applyTorqueImpulse({ x: 0, y: turnTorque, z: 0 }, false);
 
-  (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-  (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-}
+      (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+      (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
 
-if (this.keys["d"]) {
-  this.body.applyTorqueImpulse({ x: 0, y: -turnTorque, z: 0 }, false);
+      this.spawnThrusterParticles(this.rightFront, 2, 0.05);
+      this.spawnThrusterParticles(this.leftRear, 2, 0.05);
+    }
 
-  (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-  (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-}
+    if (this.keys["d"]) {
+      this.body.applyTorqueImpulse({ x: 0, y: -turnTorque, z: 0 }, false);
+
+      (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+      (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+
+
+      this.spawnThrusterParticles(this.leftFront, 2, 0.05);
+      this.spawnThrusterParticles(this.rightRear, 2, 0.05);
+    }
 
     // -------------------------
     // SYNC VISUAL → PHYSICS
@@ -250,11 +271,20 @@ if (this.keys["d"]) {
       targetPitch,
       0.1
     );
+
+    this.particles = this.particles.filter(p => {
+      const alive = p.update();
+
+      if (!alive) {
+        this.mesh.parent?.remove(p.mesh);
+      }
+
+      return alive;
+    });
   }
 
-  updateCamera(camera: THREE.Camera) 
-  {
-      // TOP-DOWN FOLLOW CAMERA
+  updateCamera(camera: THREE.Camera) {
+    // TOP-DOWN FOLLOW CAMERA
     if (this.cameraMode === 0) {
       const targetPos = new THREE.Vector3(
         this.mesh.position.x,
@@ -284,11 +314,11 @@ if (this.keys["d"]) {
       ).applyQuaternion(this.mesh.quaternion);
 
       // signed forward speed
-    const forwardSpeed = velocityVec.dot(forward);
+      const forwardSpeed = velocityVec.dot(forward);
 
-    const behindOffset = forward
-      .clone()
-      .multiplyScalar(-4 - Math.abs(forwardSpeed) * 0.25);
+      const behindOffset = forward
+        .clone()
+        .multiplyScalar(-4 - Math.abs(forwardSpeed) * 0.25);
 
       const targetPos = this.mesh.position
         .clone()
@@ -309,21 +339,44 @@ if (this.keys["d"]) {
       camera.rotateZ(-angVel.y * -0.025);
     }
   }
+
+  spawnThrusterParticles(thruster: THREE.Mesh, count = 1, size: number = 0.03) {
+    const worldPos = new THREE.Vector3();
+    const worldQuat = new THREE.Quaternion();
+    const worldScale = new THREE.Vector3();
+
+    thruster.matrixWorld.decompose(worldPos, worldQuat, worldScale);
+
+    // local direction of exhaust (cone tip direction in your setup)
+    const exhaustDir = new THREE.Vector3(0, 1, 0).applyQuaternion(worldQuat);
+
+    // cone height approximation (0.4 or 0.7 depending on large/small)
+    const coneHeight = (thruster.geometry as THREE.ConeGeometry).parameters.height ?? 0.4;
+
+    // move from pivot → tip
+    const spawnPos = worldPos.clone().add(exhaustDir.multiplyScalar(coneHeight * -0.5));
+
+    for (let i = 0; i < count; i++) {
+      const p = new ThrusterParticle(spawnPos, size);
+
+      this.particles.push(p);
+      this.mesh.parent?.add(p.mesh);
+    }
+  }
 }
 
-async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE.Group<THREE.Object3DEventMap>) 
-{
+async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE.Group<THREE.Object3DEventMap>) {
   const loader = new GLTFLoader();
 
-    await loader.loadAsync("/player_v01.glb").then((glb) => {
-      const model = glb.scene;
-      model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
-      model.position.set(0, 0, 0);    // Adjust model position
-      model.rotation.set(0, 0, 0);
-      model.rotation.y = Math.PI; 
-      scene.add(model);
-      mesh.add(model);
-    });
+  await loader.loadAsync("/player_v01.glb").then((glb) => {
+    const model = glb.scene;
+    model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
+    model.position.set(0, 0, 0);    // Adjust model position
+    model.rotation.set(0, 0, 0);
+    model.rotation.y = Math.PI;
+    scene.add(model);
+    mesh.add(model);
+  });
 }
 
 const CONE_FORWARD_FIX = new THREE.Quaternion().setFromEuler(
