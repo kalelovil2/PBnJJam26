@@ -1,9 +1,13 @@
 import { defineConfig } from "vite";
+import wasm from "vite-plugin-wasm";
 
 export default defineConfig({
-  base: "./", // IMPORTANT for itch.io
+  base: "./", // required for itch.io
+  plugins: [wasm()],
   build: {
-    outDir: "dist",
-    sourcemap: false,
+    outDir: "dist"
   },
+  optimizeDeps: {
+    exclude: ["@dimforge/rapier3d"]
+  }
 });

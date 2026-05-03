@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { StartMenu } from "./StartMenu";
 import { Ship } from "./engine/Ship.ts";
 import { rand } from "three/tsl";
-import RAPIER from "@dimforge/rapier3d-compat";
+import RAPIER from "@dimforge/rapier3d";
 import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
@@ -15,7 +15,7 @@ import { CargoGenerator } from "./engine/CargoGenerator.ts";
 export const ASTEROID_FIELD_RADIUS = 100;
 export const ASTEROID_SAFE_RADIUS = 15;
 const ASTEROID_COUNT = 280;
-const CARGO_COUNT = 10;
+const CARGO_COUNT = 30;
 export const PLAYER_START = new THREE.Vector3(0, 0, -4);
 
 const startMenu = new StartMenu();
@@ -92,43 +92,45 @@ camera.position.set(0, 10, 10);
 animate();
 
 const listener = new THREE.AudioListener();
-camera.add( listener );
+camera.add(listener);
 // create a global audio source
-const sound = new THREE.Audio( listener );
+const sound = new THREE.Audio(listener);
 // load a sound and set it as the Audio object's buffer
 const audioLoader = new THREE.AudioLoader();
-audioLoader.load( './ambient.ogg', function( buffer ) {
-	sound.setBuffer( buffer );
-	sound.setLoop( true );
-	sound.setVolume( 0.5 );
-	sound.play();
+audioLoader.load('./ambient.ogg', function (buffer) {
+  sound.setBuffer(buffer);
+  sound.setLoop(true);
+  sound.setVolume(0.4);
+  sound.play();
 });
 
 function animate() {
-  requestAnimationFrame(animate);
-
-  ship.update();
-  startingCargo.sync();
+  // APPLY INPUT / FORCES ONLY
+  ship.updateControls();
 
   stepPhysics();
 
-  for (const asteroid of asteroids) 
-  {
-    asteroid.update();
-  }
+  // READ PHYSICS STATE AFTER STEP
+  ship.syncFromPhysics();
+  startingCargo.sync();
 
-  for (const cargo of randomCargo) 
-  {
+  for (const cargo of randomCargo) {
     cargo.sync();
   }
 
   checkCargoPickup();
+
+  for (const asteroid of asteroids) {
+    asteroid.update();
+  }
 
   debugOverlay.update(ship.mesh, ship.visual);
 
   renderer.render(scene, camera);
 
   ship.updateCamera(camera);
+
+  requestAnimationFrame(animate);
 }
 
 function onLoadedPlayerModel(value: any): ((value: import("three/examples/jsm/loaders/GLTFLoader.js").GLTF) => import("three/examples/jsm/loaders/GLTFLoader.js").GLTF | PromiseLike<import("three/examples/jsm/loaders/GLTFLoader.js").GLTF>) | null | undefined {
@@ -150,6 +152,7 @@ function checkCargoPickup() {
 
     const dist2 = dx * dx + dy * dy + dz * dz;
 
+    THREE.log("TRY ATTACH");
     if (dist2 < 5.0) {
       attachCargo(cargo);
       randomCargo.splice(i, 1);

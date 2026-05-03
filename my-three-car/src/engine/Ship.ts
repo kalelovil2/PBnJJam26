@@ -1,11 +1,18 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import RAPIER from "@dimforge/rapier3d";
 import { getWorld } from "../physics";
 import { ThrusterParticle } from "./ThrusterParticle";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export class Ship {
   static FORWARD_Z = -1;
+
+  initialized = false;
+
+  cachedPosition = new THREE.Vector3();
+  cachedQuaternion = new THREE.Quaternion();
+  cachedVelocity = new THREE.Vector3();
+  cachedAngularVelocity = new THREE.Vector3();
 
   mesh: THREE.Group;
   visual: THREE.Mesh;
@@ -68,6 +75,8 @@ export class Ship {
 
     const collider = RAPIER.ColliderDesc.cuboid(0.5, 0.25, 1);
     world.createCollider(collider, this.body);
+
+    this.initialized = true;
 
     // -------------------------
     // Input
@@ -144,7 +153,8 @@ export class Ship {
     this.mesh.add(this.rightRear);
   }
 
-  update() {
+  updateControls() {
+    if (!this.initialized) return;
 
     const reset = (m: THREE.Mesh) => {
       (m.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
@@ -161,19 +171,34 @@ export class Ship {
     const thrust = 0.05;
     const turnTorque = 0.01125;
 
-    // current orientation
-    const rot = this.body.rotation();
-    const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
+    // IMPORTANT:
+    // use mesh quaternion instead of body.rotation()
+    // avoids Rapier aliasing issue
+    const forward = new THREE.Vector3(
+      0,
+      0,
+      Ship.FORWARD_Z
+    ).applyQuaternion(this.mesh.quaternion);
 
-    const forward = new THREE.Vector3(0, 0, Ship.FORWARD_Z).applyQuaternion(quat);
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quat);
+    const right = new THREE.Vector3(
+      1,
+      0,
+      0
+    ).applyQuaternion(this.mesh.quaternion);
 
     // -------------------------
     // THRUST (W/S)
     // -------------------------
 
     if (this.keys["w"]) {
-      this.body.applyImpulse({ x: forward.x * thrust, y: 0, z: forward.z * thrust }, false);
+      this.body.applyImpulse(
+        {
+          x: forward.x * thrust,
+          y: 0,
+          z: forward.z * thrust
+        },
+        false
+      );
 
       (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
       (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
@@ -183,7 +208,14 @@ export class Ship {
     }
 
     if (this.keys["s"]) {
-      this.body.applyImpulse({ x: -forward.x * thrust, y: 0, z: -forward.z * thrust }, false);
+      this.body.applyImpulse(
+        {
+          x: -forward.x * thrust,
+          y: 0,
+          z: -forward.z * thrust
+        },
+        false
+      );
 
       (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
 
@@ -195,7 +227,14 @@ export class Ship {
     // -------------------------
 
     if (this.keys["q"]) {
-      this.body.applyImpulse({ x: -right.x * thrust, y: 0, z: -right.z * thrust }, false);
+      this.body.applyImpulse(
+        {
+          x: -right.x * thrust,
+          y: 0,
+          z: -right.z * thrust
+        },
+        false
+      );
 
       (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
       (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
@@ -205,7 +244,14 @@ export class Ship {
     }
 
     if (this.keys["e"]) {
-      this.body.applyImpulse({ x: right.x * thrust, y: 0, z: right.z * thrust }, false);
+      this.body.applyImpulse(
+        {
+          x: right.x * thrust,
+          y: 0,
+          z: right.z * thrust
+        },
+        false
+      );
 
       (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
       (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
@@ -217,8 +263,16 @@ export class Ship {
     // -------------------------
     // TURNING (A/D)
     // -------------------------
+
     if (this.keys["a"]) {
-      this.body.applyTorqueImpulse({ x: 0, y: turnTorque, z: 0 }, false);
+      this.body.applyTorqueImpulse(
+        {
+          x: 0,
+          y: turnTorque,
+          z: 0
+        },
+        false
+      );
 
       (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
       (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
@@ -228,42 +282,75 @@ export class Ship {
     }
 
     if (this.keys["d"]) {
-      this.body.applyTorqueImpulse({ x: 0, y: -turnTorque, z: 0 }, false);
+      this.body.applyTorqueImpulse(
+        {
+          x: 0,
+          y: -turnTorque,
+          z: 0
+        },
+        false
+      );
 
       (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
       (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
 
-
       this.spawnThrusterParticles(this.leftFront, 2, 0.05);
       this.spawnThrusterParticles(this.rightRear, 2, 0.05);
     }
+  }
 
-    // -------------------------
-    // SYNC VISUAL → PHYSICS
-    // -------------------------
+  syncFromPhysics() {
+    if (!this.initialized) return;
+
     const pos = this.body.translation();
-    const r = this.body.rotation();
+    const rot = this.body.rotation();
+    const vel = this.body.linvel();
+    const angVel = this.body.angvel();
 
-    this.mesh.position.set(pos.x, pos.y, pos.z);
-    this.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+    this.cachedPosition.set(pos.x, pos.y, pos.z);
 
+    this.cachedQuaternion.set(
+      rot.x,
+      rot.y,
+      rot.z,
+      rot.w
+    );
+
+    this.cachedVelocity.set(
+      vel.x,
+      vel.y,
+      vel.z
+    );
+
+    this.cachedAngularVelocity.set(
+      angVel.x,
+      angVel.y,
+      angVel.z
+    );
+
+    this.mesh.position.copy(this.cachedPosition);
+    this.mesh.quaternion.copy(this.cachedQuaternion);
 
     // FAKE BODY ROLL/PITCH
-    const angVel = this.body.angvel();
 
     const targetRoll = -angVel.y * 0.25;
 
-    // smooth interpolation
     this.visual.rotation.z = THREE.MathUtils.lerp(
       this.visual.rotation.z,
       targetRoll,
       0.15
     );
 
-    const vel = this.body.linvel();
+    const forward = new THREE.Vector3(
+      0,
+      0,
+      Ship.FORWARD_Z
+    ).applyQuaternion(this.mesh.quaternion);
+
     const forwardSpeed =
       vel.x * forward.x +
       vel.z * forward.z;
+
     const targetPitch = forwardSpeed * 0.05;
 
     this.visual.rotation.x = THREE.MathUtils.lerp(
@@ -299,13 +386,7 @@ export class Ship {
 
     // BEHIND-THE-SHIP CAMERA
     else {
-      const velocity = this.body.linvel();
-
-      const velocityVec = new THREE.Vector3(
-        velocity.x,
-        velocity.y,
-        velocity.z
-      );
+      const velocityVec = this.cachedVelocity;
 
       const forward = new THREE.Vector3(
         0,
@@ -333,8 +414,8 @@ export class Ship {
         .add(forward.multiplyScalar(5));
 
       camera.lookAt(lookTarget);
-
-      const angVel = this.body.angvel();
+      
+      const angVel = this.cachedAngularVelocity;
 
       camera.rotateZ(-angVel.y * -0.025);
     }
@@ -374,7 +455,6 @@ async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE
     model.position.set(0, 0, 0);    // Adjust model position
     model.rotation.set(0, 0, 0);
     model.rotation.y = Math.PI;
-    scene.add(model);
     mesh.add(model);
   });
 }
