@@ -21,10 +21,12 @@ export class AsteroidGenerator {
                 0.08 + Math.random() * 0.15, // roughness
                 1 + Math.random() * 3       // detail
             );
+           const planeY = sampleAsteroidY();
+
             mesh.position.set(
-            (Math.random() - 0.5) * 100,
-            sampleAsteroidY(),
-            (Math.random() - 0.5) * 100
+                (Math.random() - 0.5) * 100,
+                planeY,
+                (Math.random() - 0.5) * 100
             );
             this.scene.add(mesh);
 
@@ -42,7 +44,7 @@ export class AsteroidGenerator {
 
             const body = this.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
-            asteroids.push(new Asteroid(mesh, body));
+            asteroids.push(new Asteroid(mesh, body, planeY));
         }
 
         return asteroids;
@@ -306,27 +308,24 @@ export class AsteroidGenerator {
 }
 
 function sampleAsteroidY() {
-  const bands = [-2.25, 0, 2.25];
+    const bands = [-8, 0, 8];
 
-  // bias toward center band slightly (optional tuning knob)
-  const weights = [2, 4, 2];
+    // middle lane more common
+    const weights = [1, 5, 1];
 
-  let sum = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * sum;
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
 
-  let band = 0;
+    let r = Math.random() * totalWeight;
 
-  for (let i = 0; i < bands.length; i++) {
-    r -= weights[i];
-    if (r <= 0) {
-      band = bands[i];
-      break;
+    for (let i = 0; i < bands.length; i++) {
+        r -= weights[i];
+
+        if (r <= 0) {
+            return bands[i];
+        }
     }
-  }
 
-  // add small vertical spread so it's not perfectly flat
-  const spread = 1.2;
-
-  return band + (Math.random() - 0.5) * spread;
+    // fallback (should never happen)
+    return 0;
 }
 

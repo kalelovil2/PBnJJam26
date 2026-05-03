@@ -46,7 +46,7 @@ const joint = RAPIER.JointData.spring(
   new RAPIER.Vector3(0, 0, -1)
 );
 
-//getWorld().createImpulseJoint(joint, ship.body, cargo.body, true);
+getWorld().createImpulseJoint(joint, ship.body, cargo.body, true);
 
 // add a front indicator
 // const nose = new THREE.Mesh(
@@ -73,7 +73,7 @@ const joint = RAPIER.JointData.spring(
 
 // asteroids
 const asteroidGenerator = new AsteroidGenerator(scene);
-const asteroids = asteroidGenerator.createAsteroids(80);
+const asteroids = asteroidGenerator.createAsteroids(160);
 
 // checkpoints
 const checkpoints =
@@ -97,8 +97,9 @@ function animate() {
 
   stepPhysics();
 
-  for (const a of asteroids) {
-    a.syncFromPhysics();
+  for (const asteroid of asteroids) 
+  {
+    asteroid.update();
   }
 
   debugOverlay.update(ship.mesh, ship.visual);
