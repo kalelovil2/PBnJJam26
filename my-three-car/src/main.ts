@@ -85,10 +85,6 @@ function animate() {
   car.update();
   cargo.sync();
 
-  camera.position.x = car.mesh.position.x;
-  camera.position.z = car.mesh.position.z + 10;
-  camera.lookAt(car.mesh.position);
-
   stepPhysics();
 
   for (const a of asteroids) {
@@ -98,6 +94,8 @@ function animate() {
   debugOverlay.update(car.mesh, car.visual);
 
   renderer.render(scene, camera);
+
+  car.updateCamera(camera);
 }
 
 function onLoadedPlayerModel(value: any): ((value: import("three/examples/jsm/loaders/GLTFLoader.js").GLTF) => import("three/examples/jsm/loaders/GLTFLoader.js").GLTF | PromiseLike<import("three/examples/jsm/loaders/GLTFLoader.js").GLTF>) | null | undefined {

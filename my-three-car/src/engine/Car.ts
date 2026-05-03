@@ -12,6 +12,8 @@ export class Car {
 
   keys: Record<string, boolean> = {};
 
+  cameraMode = 0;
+
   constructor(scene: THREE.Scene, position: THREE.Vector3) {
     // -------------------------
     // Visual mesh
@@ -51,6 +53,16 @@ export class Car {
 
     window.addEventListener("keyup", (e) => {
       this.keys[e.key.toLowerCase()] = false;
+    });
+    
+    window.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+
+      this.keys[key] = true;
+
+      if (key === "c") {
+        this.cameraMode = (this.cameraMode + 1) % 2;
+      }
     });
   }
 
@@ -143,6 +155,64 @@ export class Car {
       targetPitch,
       0.1
     );
+  }
+
+  updateCamera(camera: THREE.Camera) 
+  {
+      // TOP-DOWN FOLLOW CAMERA
+    if (this.cameraMode === 0) {
+      const targetPos = new THREE.Vector3(
+        this.mesh.position.x,
+        this.mesh.position.y + 8,
+        this.mesh.position.z + 10
+      );
+
+      camera.position.lerp(targetPos, 0.1);
+
+      camera.lookAt(this.mesh.position);
+    }
+
+    // BEHIND-THE-SHIP CAMERA
+    else {
+      const velocity = this.body.linvel();
+
+      const velocityVec = new THREE.Vector3(
+        velocity.x,
+        velocity.y,
+        velocity.z
+      );
+
+      const forward = new THREE.Vector3(
+        0,
+        0,
+        Car.FORWARD_Z
+      ).applyQuaternion(this.mesh.quaternion);
+
+      // signed forward speed
+    const forwardSpeed = velocityVec.dot(forward);
+
+    const behindOffset = forward
+      .clone()
+      .multiplyScalar(-4 - Math.abs(forwardSpeed) * 0.25);
+
+      const targetPos = this.mesh.position
+        .clone()
+        .add(behindOffset)
+        .add(new THREE.Vector3(0, 3, 0));
+
+      camera.position.lerp(targetPos, 0.1);
+
+      // look slightly ahead of ship
+      const lookTarget = this.mesh.position
+        .clone()
+        .add(forward.multiplyScalar(5));
+
+      camera.lookAt(lookTarget);
+
+      const angVel = this.body.angvel();
+
+      camera.rotateZ(-angVel.y * -0.025);
+    }
   }
 }
 
