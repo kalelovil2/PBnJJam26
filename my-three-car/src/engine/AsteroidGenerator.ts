@@ -5,15 +5,9 @@ import { Asteroid } from "./Asteroid";
 import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "../main";
 
 export class AsteroidGenerator {
-    scene: THREE.Scene;
+    static asteroidPositions: THREE.Vector3[] = [];
 
-    asteroidPositions: THREE.Vector3[] = [];
-
-    constructor(scene: THREE.Scene) {
-        this.scene = scene;
-    }
-
-    createAsteroids(num : number) {
+    static createAsteroids(scene : THREE.Scene, num : number) {
         const asteroids: Asteroid[] = [];
 
         for (let i = 0; i < num; i++) {
@@ -44,7 +38,7 @@ export class AsteroidGenerator {
             }
 
             mesh.position.set(position.x, position.y, position.z);
-            this.scene.add(mesh);
+            scene.add(mesh);
 
             const startingRotation = new THREE.Vector3(
                 (Math.random() - 0.5) * 0.3,
@@ -58,7 +52,7 @@ export class AsteroidGenerator {
                 (Math.random() - 0.5) * 1.25
             );
 
-            const body = this.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
+            const body = AsteroidGenerator.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
             this.asteroidPositions.push(mesh.position.clone());
             
@@ -68,7 +62,7 @@ export class AsteroidGenerator {
         return asteroids;
     }
 
-    createAsteroidMesh(
+    static createAsteroidMesh(
         radius = 1,
         roughness = 0.5,
         detail = 3
@@ -124,7 +118,7 @@ export class AsteroidGenerator {
         return new THREE.Mesh(geometry, material);
     }
 
-    createAsteroidTexture() {
+    static createAsteroidTexture() {
         const size = 512;
 
         const canvas = document.createElement("canvas");
@@ -213,7 +207,7 @@ export class AsteroidGenerator {
         return new THREE.CanvasTexture(canvas);
     }
 
-    createAsteroidBumpMap() {
+    static createAsteroidBumpMap() {
         const size = 512;
 
         const canvas = document.createElement("canvas");
@@ -281,7 +275,7 @@ export class AsteroidGenerator {
         return new THREE.CanvasTexture(canvas);
     }
 
-    createAsteroidPhysics(position: { x: any; y: any; z: any; }, radius = 1,
+    static createAsteroidPhysics(position: { x: any; y: any; z: any; }, radius = 1,
         startingRotation = new THREE.Vector3, startingDrift = new THREE.Vector3
     ) {
         const world = getWorld();

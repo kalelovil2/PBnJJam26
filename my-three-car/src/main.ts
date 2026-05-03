@@ -7,12 +7,14 @@ import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
 import { CheckpointGenerator } from "./engine/CheckpointGenerator.ts";
-import { Cargo } from "./engine/Cargo";
+import { Cargo, CargoType } from "./engine/Cargo";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { CargoGenerator } from "./engine/CargoGenerator.ts";
 
 export const ASTEROID_FIELD_RADIUS = 100;
 export const ASTEROID_SAFE_RADIUS = 15;
 const ASTEROID_COUNT = 280;
+const CARGO_COUNT = 10;
 export const PLAYER_START = new THREE.Vector3(0, 0, -4);
 
 const scene = new THREE.Scene();
@@ -42,7 +44,7 @@ scene.add(ambient);
 
 // ship
 const ship = new Ship(scene, PLAYER_START);
-const cargo = new Cargo(scene, new THREE.Vector3(0, 0, 2.5));
+const startingCargo = new Cargo(scene, new THREE.Vector3(0, 0, 2.5), CargoType.SAFE);
 const joint = RAPIER.JointData.spring(
   0.25,   // rest length (distance between ship and cargo)
   80.0,  // stiffness (higher = tighter connection)
@@ -51,11 +53,10 @@ const joint = RAPIER.JointData.spring(
   new RAPIER.Vector3(0, 0, -1)
 );
 
-getWorld().createImpulseJoint(joint, ship.body, cargo.body, true);
+getWorld().createImpulseJoint(joint, ship.body, startingCargo.body, true);
 
 // asteroids
-const asteroidGenerator = new AsteroidGenerator(scene);
-const asteroids = asteroidGenerator.createAsteroids(ASTEROID_COUNT);
+const asteroids = AsteroidGenerator.createAsteroids(scene, ASTEROID_COUNT);
 
 // checkpoints
 const checkpoints =
@@ -67,6 +68,16 @@ const checkpoints =
     100   // level radius
   );
 
+// Random cargo
+const randomCargo =
+  CargoGenerator.spawnCargo(
+    scene,
+    asteroids,
+    checkpoints,
+    CARGO_COUNT,
+    ASTEROID_FIELD_RADIUS
+  );
+
 // camera position (top-down-ish)
 camera.position.set(0, 10, 10);
 
@@ -76,13 +87,18 @@ function animate() {
   requestAnimationFrame(animate);
 
   ship.update();
-  cargo.sync();
+  startingCargo.sync();
 
   stepPhysics();
 
   for (const asteroid of asteroids) 
   {
     asteroid.update();
+  }
+
+  for (const cargo of randomCargo) 
+  {
+    cargo.sync();
   }
 
   debugOverlay.update(ship.mesh, ship.visual);
