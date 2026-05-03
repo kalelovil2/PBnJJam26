@@ -12,7 +12,29 @@ export class Ship {
 
   keys: Record<string, boolean> = {};
 
+  mainForwardLeft: THREE.Mesh;
+  mainForwardRight: THREE.Mesh;
+
+mainReverse: THREE.Mesh;
+
+leftFront: THREE.Mesh;
+leftRear: THREE.Mesh;
+
+rightFront: THREE.Mesh;
+rightRear: THREE.Mesh;
+
   cameraMode = 0;
+
+  createThruster(material: THREE.Material, isLarge: boolean = false) {
+    const mesh = new THREE.Mesh(
+      isLarge ? new THREE.ConeGeometry(0.18, 0.7, 8) : new THREE.ConeGeometry(0.1, 0.4, 8),
+      material.clone()
+    );
+
+    mesh.rotation.x = -Math.PI / 2;
+
+    return mesh;
+  }
 
   constructor(scene: THREE.Scene, position: THREE.Vector3) {
     // -------------------------
@@ -64,9 +86,75 @@ export class Ship {
         this.cameraMode = (this.cameraMode + 1) % 2;
       }
     });
+
+
+
+const mat = new THREE.MeshStandardMaterial({
+  color: 0xff4400,
+  emissive: 0xff2200,
+  emissiveIntensity: 0,
+});
+
+// MAIN FORWARD
+this.mainForwardLeft = this.createThruster(mat, true);
+this.mainForwardRight = this.createThruster(mat, true);
+this.mainForwardLeft.position.set(-0.325, 0, 0.75);
+this.mainForwardRight.position.set(0.325, 0, 0.75);
+
+this.mainForwardLeft.rotation.x = -Math.PI / 2;
+this.mainForwardRight.rotation.x = -Math.PI / 2;
+this.mesh.add(this.mainForwardLeft);
+this.mesh.add(this.mainForwardRight);
+
+// MAIN REVERSE (optional small retro thruster at front)
+this.mainReverse = this.createThruster(mat);
+this.mainReverse.position.set(0, 0, -0.8);
+
+this.mainReverse.rotation.x = Math.PI / 2;
+this.mesh.add(this.mainReverse);
+
+// LEFT SIDE PAIR
+this.leftFront = this.createThruster(mat);
+this.leftRear = this.createThruster(mat);
+
+this.leftFront.position.set(-0.375, 0, -0.5);
+this.leftRear.position.set(-0.5, 0, 0.6);
+
+this.leftFront.rotation.z = -Math.PI / 2;
+this.leftRear.rotation.z = -Math.PI / 2;
+
+this.mesh.add(this.leftFront);
+this.mesh.add(this.leftRear);
+
+// RIGHT SIDE PAIR
+this.rightFront = this.createThruster(mat);
+this.rightRear = this.createThruster(mat);
+
+this.rightFront.position.set(0.375, 0, -0.5);
+this.rightRear.position.set(0.5, 0, 0.6);
+
+// face right (+X)w
+this.rightFront.rotation.z = Math.PI / 2;
+this.rightRear.rotation.z = Math.PI / 2;
+
+this.mesh.add(this.rightFront);
+this.mesh.add(this.rightRear);
   }
 
   update() {
+
+    const reset = (m: THREE.Mesh) => {
+  (m.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+};
+
+reset(this.mainForwardLeft);
+reset(this.mainForwardRight);
+reset(this.mainReverse);
+reset(this.leftFront);
+reset(this.leftRear);
+reset(this.rightFront);
+reset(this.rightRear);
+
     const thrust = 0.05;
     const turnTorque = 0.01125;
 
@@ -80,47 +168,54 @@ export class Ship {
     // -------------------------
     // THRUST (W/S)
     // -------------------------
-    if (this.keys["w"]) {
-      this.body.applyImpulse(
-        { x: forward.x * thrust, y: 0, z: forward.z * thrust },
-        false
-      );
-    }
 
-    if (this.keys["s"]) {
-      this.body.applyImpulse(
-        { x: -forward.x * thrust, y: 0, z: -forward.z * thrust },
-        false
-      );
-    }
+if (this.keys["w"]) {
+  this.body.applyImpulse({ x: forward.x * thrust, y: 0, z: forward.z * thrust }, false);
+
+  (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+  (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+}
+
+if (this.keys["s"]) {
+  this.body.applyImpulse({ x: -forward.x * thrust, y: 0, z: -forward.z * thrust }, false);
+
+  (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+}
 
     // -------------------------
     // STRAFE (Q/E)
     // -------------------------
-    if (this.keys["q"]) {
-      this.body.applyImpulse(
-        { x: -right.x * thrust, y: 0, z: -right.z * thrust },
-        false
-      );
-    }
 
-    if (this.keys["e"]) {
-      this.body.applyImpulse(
-        { x: right.x * thrust, y: 0, z: right.z * thrust },
-        false
-      );
-    }
+    if (this.keys["q"]) {
+  this.body.applyImpulse({ x: -right.x * thrust, y: 0, z: -right.z * thrust }, false);
+
+  (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+  (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+}
+
+if (this.keys["e"]) {
+  this.body.applyImpulse({ x: right.x * thrust, y: 0, z: right.z * thrust }, false);
+
+  (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+  (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+}
 
     // -------------------------
     // TURNING (A/D)
     // -------------------------
-    if (this.keys["a"]) {
-      this.body.applyTorqueImpulse({ x: 0, y: turnTorque, z: 0 }, false);
-    }
+if (this.keys["a"]) {
+  this.body.applyTorqueImpulse({ x: 0, y: turnTorque, z: 0 }, false);
 
-    if (this.keys["d"]) {
-      this.body.applyTorqueImpulse({ x: 0, y: -turnTorque, z: 0 }, false);
-    }
+  (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+  (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+}
+
+if (this.keys["d"]) {
+  this.body.applyTorqueImpulse({ x: 0, y: -turnTorque, z: 0 }, false);
+
+  (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+  (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+}
 
     // -------------------------
     // SYNC VISUAL → PHYSICS
@@ -230,3 +325,7 @@ async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE
       mesh.add(model);
     });
 }
+
+const CONE_FORWARD_FIX = new THREE.Quaternion().setFromEuler(
+  new THREE.Euler(Math.PI / 2, 0, 0)
+);
