@@ -6,34 +6,41 @@ export class Checkpoint {
   mesh: THREE.Mesh;
   body: RAPIER.RigidBody;
 
-  constructor(world : RAPIER.World, position : THREE.Vector3) 
-  {
-    //THREE.log("Position: ", position)
-      // visible mesh
-      this.mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(2, 2, 0.05, 16),
-        new THREE.MeshStandardMaterial({
-          color: 0x00ffff,
-          emissive: 0x0088ff,
-        })
-      );
-      this.mesh.position.set(0,-0.10, 0);
+  constructor(world: RAPIER.World, position: THREE.Vector3) {
+    // VISUAL BASE
+    this.mesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(2, 2, 0.05, 48),
+      new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x0088ff,
+      })
+    );
+    this.mesh.geometry.translate(0, -0.25, 0);
 
-      // physics body
-      const bodyDesc = RAPIER.RigidBodyDesc.fixed()
-        .setTranslation(position!.x, position!.y, position!.z);
+    this.mesh.position.set(0, -0.1, 0);
 
-    const body = world.createRigidBody(bodyDesc);
+    // PHYSICS BODY
+    const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(
+      position.x,
+      position.y,
+      position.z
+    );
 
-      // sensor collider
-      const colliderDesc = RAPIER.ColliderDesc.cuboid(2, 2, 2)
-        .setSensor(true);
+    this.body = world.createRigidBody(bodyDesc);
 
-      world.createCollider(colliderDesc, body);
+    // SOLID PHYSICS COLLIDER (NON-SENSOR)
+    const ringCollider = RAPIER.ColliderDesc.cuboid(0.95, 0.3, 0.95)
+      .setTranslation(0, 0.2, 0);
 
+    world.createCollider(ringCollider, this.body);
 
-    this.body = body;
+    // SENSOR COLLIDER
+    const sensorCollider = RAPIER.ColliderDesc.cuboid(2, 2, 2)
+      .setSensor(true);
 
+    world.createCollider(sensorCollider, this.body);
+
+    // LOAD VISUAL MODEL
     loadModel(this.mesh);
   }
 
