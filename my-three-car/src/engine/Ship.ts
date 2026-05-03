@@ -368,7 +368,7 @@ export class Ship {
 async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE.Group<THREE.Object3DEventMap>) {
   const loader = new GLTFLoader();
 
-  await loader.loadAsync("/player_v01.glb").then((glb) => {
+  await loader.loadAsync("./player_v01.glb").then((glb) => {
     const model = glb.scene;
     model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
     model.position.set(0, 0, 0);    // Adjust model position

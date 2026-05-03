@@ -57,7 +57,7 @@ async function loadModel(mesh: THREE.Mesh)
 {
   const loader = new GLTFLoader();
 
-    await loader.loadAsync("/checkpoint_v01.glb").then((glb) => {
+    await loader.loadAsync("./checkpoint_v01.glb").then((glb) => {
       const model = glb.scene;
       model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
       model.position.set(0, 0, 0);    // Adjust model position

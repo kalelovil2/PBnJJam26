@@ -18,7 +18,7 @@ const safeDecalTexture =
 const contrabandDecalTexture =
   textureLoader.load("/textures/BannedCargo_CoffeeBeans_v02.png");
 
-  const DECAL_OFFSET = 0.05;
+const DECAL_OFFSET = 0.05;
 
 export class Cargo {
   mesh: THREE.Mesh;
@@ -66,13 +66,13 @@ export class Cargo {
     this.body = world.createRigidBody(bodyDesc);
 
     this.body.setLinvel(
-    {
-      x: (Math.random() - 0.5) * 0.75,
-      y: 0,
-      z: (Math.random() - 0.5) * 0.75
-    },
-    false
-  );
+      {
+        x: (Math.random() - 0.5) * 0.75,
+        y: 0,
+        z: (Math.random() - 0.5) * 0.75
+      },
+      false
+    );
 
     const collider = RAPIER.ColliderDesc
       .cuboid(0.5, 0.5, 1)
@@ -81,59 +81,59 @@ export class Cargo {
     world.createCollider(collider, this.body);
 
     const decalTexture =
-  type === CargoType.CONTRABAND
-    ? contrabandDecalTexture
-    : safeDecalTexture;
+      type === CargoType.CONTRABAND
+        ? contrabandDecalTexture
+        : safeDecalTexture;
 
-const decalMaterial = new THREE.MeshStandardMaterial({
-  map: decalTexture,
-  transparent: true,
-  depthWrite: false,
-  polygonOffset: true,
-  polygonOffsetFactor: -1,
-  side: THREE.DoubleSide
-});
+    const decalMaterial = new THREE.MeshStandardMaterial({
+      map: decalTexture,
+      transparent: true,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      side: THREE.DoubleSide
+    });
 
-const decalGeometry = new THREE.PlaneGeometry(0.7, 0.7);
+    const decalGeometry = new THREE.PlaneGeometry(0.7, 0.7);
 
-const frontDecal = new THREE.Mesh(
-  decalGeometry,
-  decalMaterial
-);
+    const frontDecal = new THREE.Mesh(
+      decalGeometry,
+      decalMaterial
+    );
 
-frontDecal.position.set(0, 0, -(0.8 + DECAL_OFFSET));
+    frontDecal.position.set(0, 0, -(0.8 + DECAL_OFFSET));
 
-this.mesh.add(frontDecal);
+    this.mesh.add(frontDecal);
 
-const backDecal = new THREE.Mesh(
-  decalGeometry,
-  decalMaterial
-);
+    const backDecal = new THREE.Mesh(
+      decalGeometry,
+      decalMaterial
+    );
 
-backDecal.position.set(0, 0,  (0.8 + DECAL_OFFSET));
-backDecal.rotation.y = Math.PI;
+    backDecal.position.set(0, 0, (0.8 + DECAL_OFFSET));
+    backDecal.rotation.y = Math.PI;
 
-this.mesh.add(backDecal);
+    this.mesh.add(backDecal);
 
-const leftDecal = new THREE.Mesh(
-  decalGeometry,
-  decalMaterial
-);
+    const leftDecal = new THREE.Mesh(
+      decalGeometry,
+      decalMaterial
+    );
 
-leftDecal.position.set(-0.46, 0, 0);
-leftDecal.rotation.y = -Math.PI / 2;
+    leftDecal.position.set(-0.46, 0, 0);
+    leftDecal.rotation.y = -Math.PI / 2;
 
-this.mesh.add(leftDecal);
+    this.mesh.add(leftDecal);
 
-const rightDecal = new THREE.Mesh(
-  decalGeometry,
-  decalMaterial
-);
+    const rightDecal = new THREE.Mesh(
+      decalGeometry,
+      decalMaterial
+    );
 
-rightDecal.position.set(0.46, 0, 0);
-rightDecal.rotation.y = Math.PI / 2;
+    rightDecal.position.set(0.46, 0, 0);
+    rightDecal.rotation.y = Math.PI / 2;
 
-this.mesh.add(rightDecal);
+    this.mesh.add(rightDecal);
 
     scene.add(this.mesh);
   }
