@@ -444,6 +444,19 @@ export class Ship {
       this.mesh.parent?.add(p.mesh);
     }
   }
+
+  getAttachmentPointRear(worldPoint = new THREE.Vector3()) {
+    this.mesh.getWorldPosition(worldPoint);
+
+    const quat = this.mesh.quaternion;
+
+    const offset = new THREE.Vector3(0, 0, 0.625); // rear hitch point
+
+    offset.applyQuaternion(quat);
+    worldPoint.add(offset);
+
+    return worldPoint;
+  }
 }
 
 async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE.Group<THREE.Object3DEventMap>) {
