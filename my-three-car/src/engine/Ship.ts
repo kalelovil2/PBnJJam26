@@ -169,7 +169,7 @@ export class Ship {
     reset(this.rightRear);
 
     const thrust = 0.05;
-    const turnTorque = 0.01125;
+    const turnTorque = 0.0175;
 
     // IMPORTANT:
     // use mesh quaternion instead of body.rotation()

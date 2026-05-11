@@ -271,6 +271,28 @@ export class Cargo {
       return;
     }
 
+    const pos = this.body.translation();
+
+    this.body.setTranslation(
+      {
+        x: pos.x,
+        y: this.followTarget.body.translation().y, // lock to ship height
+        z: pos.z
+      },
+      true
+    );
+
+    const ang = this.body.angvel();
+
+    this.body.setAngvel(
+      {
+        x: 0,        // no pitch
+        y: ang.y,    // allow yaw
+        z: 0         // no roll
+      },
+      true
+    );
+
     //
     // CAPTURE MODE
     //
