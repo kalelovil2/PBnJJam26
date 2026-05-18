@@ -73,7 +73,12 @@ export class Ship {
 
     this.body = world.createRigidBody(bodyDesc);
 
-    const collider = RAPIER.ColliderDesc.cuboid(0.5, 0.25, 1);
+    const collider = RAPIER.ColliderDesc
+      .cuboid(0.5, 0.25, 1)
+      .setActiveEvents(
+        RAPIER.ActiveEvents.COLLISION_EVENTS
+      );
+
     world.createCollider(collider, this.body);
 
     this.initialized = true;
@@ -414,7 +419,7 @@ export class Ship {
         .add(forward.multiplyScalar(5));
 
       camera.lookAt(lookTarget);
-      
+
       const angVel = this.cachedAngularVelocity;
 
       camera.rotateZ(-angVel.y * -0.025);

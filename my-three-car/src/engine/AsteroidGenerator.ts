@@ -7,7 +7,7 @@ import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "../main";
 export class AsteroidGenerator {
     static asteroidPositions: THREE.Vector3[] = [];
 
-    static createAsteroids(scene : THREE.Scene, num : number) {
+    static createAsteroids(scene: THREE.Scene, num: number) {
         const asteroids: Asteroid[] = [];
 
         for (let i = 0; i < num; i++) {
@@ -18,7 +18,7 @@ export class AsteroidGenerator {
                 0.08 + Math.random() * 0.15, // roughness
                 1 + Math.random() * 3       // detail
             );
-           const planeY = sampleAsteroidY();
+            const planeY = sampleAsteroidY();
 
             const minPlayerDistance = 12;
 
@@ -55,7 +55,7 @@ export class AsteroidGenerator {
             const body = AsteroidGenerator.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
             this.asteroidPositions.push(mesh.position.clone());
-            
+
             asteroids.push(new Asteroid(mesh, body, planeY));
         }
 
@@ -311,7 +311,10 @@ export class AsteroidGenerator {
         // collider (sphere is best for asteroids)
         const colliderDesc = RAPIER.ColliderDesc
             .ball(radius)
-            .setMass(5 * radius);
+            .setMass(5 * radius)
+            .setActiveEvents(
+                RAPIER.ActiveEvents.COLLISION_EVENTS
+            );
 
         world.createCollider(colliderDesc, body);
 

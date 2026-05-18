@@ -53,16 +53,15 @@ export class Checkpoint {
   }
 }
 
-async function loadModel(mesh: THREE.Mesh) 
-{
+async function loadModel(mesh: THREE.Mesh) {
   const loader = new GLTFLoader();
 
-    await loader.loadAsync("./checkpoint_v01.glb").then((glb) => {
-      const model = glb.scene;
-      model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
-      model.position.set(0, 0, 0);    // Adjust model position
-      model.rotation.set(0, 0, 0);
-      model.rotation.y = Math.PI;
-      mesh.add(model);
-    });
+  await loader.loadAsync("./checkpoint_v01.glb").then((glb) => {
+    const model = glb.scene;
+    model.scale.set(0.075, 0.075, 0.075);       // Adjust model scale
+    model.position.set(0, 0, 0);    // Adjust model position
+    model.rotation.set(0, 0, 0);
+    model.rotation.y = Math.PI;
+    mesh.add(model);
+  });
 }

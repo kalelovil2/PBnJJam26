@@ -23,28 +23,27 @@ export class CargoHealth {
     mat.emissiveIntensity = 15.0;
   }
 
-  
-    update(dt: number) {
+  update(dt: number) {
     if (this.flashTime > 0) {
-        this.flashTime -= dt;
+      this.flashTime -= dt;
 
-        const t = this.flashTime / 0.2;
+      const t = this.flashTime / 0.2;
 
-        const mat = this.mesh.material as THREE.MeshStandardMaterial;
+      const mat = this.mesh.material as THREE.MeshStandardMaterial;
 
-        mat.emissiveIntensity = t * 5.0;
+      mat.emissiveIntensity = t * 5.0;
 
-        if (this.flashTime <= 0) {
+      if (this.flashTime <= 0) {
         mat.emissiveIntensity = 0;
-        }
+      }
     }
-    }
+  }
 
   get damageRatio() {
     return 1 - this.hp / this.maxHp;
   }
 
   get debugString() {
-  return `HP: ${this.hp.toFixed(1)} / ${this.maxHp}`;
-}
+    return `HP: ${this.hp.toFixed(1)} / ${this.maxHp}`;
+  }
 }

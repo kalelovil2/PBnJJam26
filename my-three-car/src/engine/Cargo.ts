@@ -63,11 +63,11 @@ export class Cargo {
         ? 0xff0066
         : 0x00ffaa;
 
-        const material = new THREE.MeshStandardMaterial({
-  color,
-  emissive: new THREE.Color(0x000000),
-  emissiveIntensity: 0,
-});
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      emissive: new THREE.Color(0x000000),
+      emissiveIntensity: 0,
+    });
 
     this.mesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.9, 1, 1.6),
@@ -117,7 +117,10 @@ export class Cargo {
 
     const colliderDesc = RAPIER.ColliderDesc
       .cuboid(0.5, 0.5, 1)
-      .setMass(0.25);
+      .setMass(0.25)
+      .setActiveEvents(
+        RAPIER.ActiveEvents.COLLISION_EVENTS
+      );
 
     this.collider = world.createCollider(
       colliderDesc,
@@ -445,7 +448,7 @@ export class Cargo {
   }
 
   sync() {
-this.health.update(1 / 60);
+    this.health.update(1 / 60);
 
     const pos = this.body.translation();
     const rot = this.body.rotation();
@@ -458,6 +461,5 @@ this.health.update(1 / 60);
     }
 
     const mat = this.mesh.material as THREE.MeshStandardMaterial;
-console.log("emissive:", mat.emissiveIntensity);
   }
 }

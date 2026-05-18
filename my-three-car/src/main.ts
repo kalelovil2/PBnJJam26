@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { ImpactParticleSystem }from "./engine/ImpactParticleSystem";
 
 import { StartMenu } from "./StartMenu";
 import { Ship } from "./engine/Ship.ts";
@@ -131,6 +132,21 @@ damageSystem.registerCargo(startingCargo2);
 for (const c of levelCargo) {
   damageSystem.registerCargo(c);
 }
+
+const impactParticles =
+  new ImpactParticleSystem(scene);
+
+  damageSystem.onImpact = (
+  position,
+  normal,
+  strength
+) => {
+  impactParticles.spawnImpact(
+    position,
+    normal,
+    strength
+  );
+};
 
 //
 // ASTEROIDS
@@ -411,6 +427,8 @@ function animate() {
 
   tetherRenderer.update(ship, cargoChain);
 
+  impactParticles.update(1 / 60);
+
   //
   // ASTEROIDS
   //
@@ -452,6 +470,26 @@ window.addEventListener("keydown", (e) => {
 
     firstCargo.health.applyDamage(25);
     console.log("Cargo HP:", firstCargo.health.hp);
+  }
+});
+
+window.addEventListener("keydown", (e) => {
+
+  if (e.key === "p") {
+    console.log("DEBUG HIT PARTICLES BURST");
+
+    const firstCargo = cargoChain[0];
+    if (!firstCargo) return;
+
+    const pos = firstCargo.mesh.position.clone();
+
+    impactParticles.spawnImpact(
+      pos,
+      new THREE.Vector3(0.5, 0, 1),
+      100
+    );
+
+    console.log("DEBUG PARTICLES");
   }
 });
 

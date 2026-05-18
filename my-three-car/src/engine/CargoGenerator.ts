@@ -43,12 +43,12 @@ export class CargoGenerator {
           )
         );
 
-        
-        
+
+
         const startingDrift = new THREE.Vector3(
-            (Math.random() - 0.5) * 1.25,
-            0,
-            (Math.random() - 0.5) * 1.25
+          (Math.random() - 0.5) * 1.25,
+          0,
+          (Math.random() - 0.5) * 1.25
         );
 
         valid = true;
