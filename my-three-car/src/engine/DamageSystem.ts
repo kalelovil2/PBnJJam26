@@ -71,10 +71,12 @@ export class DamageSystem {
 
       if (cargoA) {
         cargoA.health.applyDamage(damage);
+        cargoA.damageVisual.applyDamage(damage * 0.01);
       }
 
       if (cargoB) {
         cargoB.health.applyDamage(damage);
+        cargoB.damageVisual.applyDamage(damage * 0.01);
       }
     });
   }

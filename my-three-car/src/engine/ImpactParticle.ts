@@ -11,7 +11,7 @@ export class ImpactParticle {
     scene: THREE.Scene,
     position: THREE.Vector3,
     velocity: THREE.Vector3,
-    size = 0.15
+    size = 0.3
   ) {
     this.mesh = new THREE.Mesh(
       new THREE.BoxGeometry(size, size, size),

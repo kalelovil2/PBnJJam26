@@ -4,6 +4,7 @@ import { getWorld } from "../physics";
 import type { Ship } from "./Ship";
 import { CargoHealth } from "./CargoHealth";
 import { DEBUG } from "../config";
+import { CargoDamageVisual } from "./CargoDamageVisual";
 
 export const CargoType = {
   SAFE: "SAFE",
@@ -50,6 +51,8 @@ export class Cargo {
   captureTimer = 0;
 
   defaultCollisionGroups = 0;
+  
+  damageVisual: CargoDamageVisual;
 
   constructor(
     scene: THREE.Scene,
@@ -75,6 +78,8 @@ export class Cargo {
         color
       })
     );
+
+    this.damageVisual = new CargoDamageVisual(this.mesh);
 
     this.mesh.material = material.clone();
 

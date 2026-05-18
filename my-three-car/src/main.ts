@@ -469,6 +469,7 @@ window.addEventListener("keydown", (e) => {
     if (!firstCargo) return;
 
     firstCargo.health.applyDamage(25);
+    firstCargo.damageVisual.applyDamage(25 * 0.01);
     console.log("Cargo HP:", firstCargo.health.hp);
   }
 });
