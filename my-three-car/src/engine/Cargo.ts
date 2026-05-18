@@ -2,6 +2,8 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
 import { getWorld } from "../physics";
 import type { Ship } from "./Ship";
+import { CargoHealth } from "./CargoHealth";
+import { DEBUG } from "../config";
 
 export const CargoType = {
   SAFE: "SAFE",
@@ -27,6 +29,8 @@ export class Cargo {
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
   joint: RAPIER.ImpulseJoint | null = null;
+
+  health: CargoHealth;
 
   attached = false;
 
@@ -59,12 +63,20 @@ export class Cargo {
         ? 0xff0066
         : 0x00ffaa;
 
+        const material = new THREE.MeshStandardMaterial({
+  color,
+  emissive: new THREE.Color(0x000000),
+  emissiveIntensity: 0,
+});
+
     this.mesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.9, 1, 1.6),
       new THREE.MeshStandardMaterial({
         color
       })
     );
+
+    this.mesh.material = material.clone();
 
     this.mesh.position.copy(position);
 
@@ -76,6 +88,8 @@ export class Cargo {
       )
     );
     this.mesh.rotation.set(q.x, q.y, q.z);
+
+    this.health = new CargoHealth(this.mesh, 100);
 
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(position.x, position.y, position.z)
@@ -431,10 +445,19 @@ export class Cargo {
   }
 
   sync() {
+this.health.update(1 / 60);
+
     const pos = this.body.translation();
     const rot = this.body.rotation();
 
     this.mesh.position.set(pos.x, pos.y, pos.z);
     this.mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w);
+
+    if (DEBUG) {
+      this.mesh.userData.debug = this.health.debugString;
+    }
+
+    const mat = this.mesh.material as THREE.MeshStandardMaterial;
+console.log("emissive:", mat.emissiveIntensity);
   }
 }

@@ -5,7 +5,7 @@ import { Ship } from "./engine/Ship.ts";
 import { CargoTetherRenderer } from "./engine/CargoTetherRenderer";
 import RAPIER from "@dimforge/rapier3d";
 
-import { getWorld, initPhysics, stepPhysics } from "./physics";
+import { getWorld, initPhysics, stepPhysics, world } from "./physics";
 
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
@@ -18,6 +18,7 @@ import {
 
 import { CargoGenerator } from "./engine/CargoGenerator.ts";
 import { PhysicsDebug } from "./engine/PhysicsDebug.ts";
+import { DamageSystem } from "./engine/DamageSystem.ts";
 
 export const ASTEROID_FIELD_RADIUS = 100;
 export const ASTEROID_SAFE_RADIUS = 15;
@@ -122,6 +123,15 @@ const cargoChain: Cargo[] = [];
 
 const tetherRenderer = new CargoTetherRenderer(scene);
 
+const damageSystem = new DamageSystem();
+
+damageSystem.registerCargo(startingCargo1);
+damageSystem.registerCargo(startingCargo2);
+
+for (const c of levelCargo) {
+  damageSystem.registerCargo(c);
+}
+
 //
 // ASTEROIDS
 //
@@ -167,18 +177,12 @@ levelCargo.push(...spawnedCargo);
 levelCargo.push(startingCargo1);
 levelCargo.push(startingCargo2);
 
-//
-// INITIALIZE TRAILER CHAIN
-//
+damageSystem.registerCargo(startingCargo1);
+damageSystem.registerCargo(startingCargo2);
 
-// startingCargo1.attached = true;
-// startingCargo1.followTarget = ship;
-
-// startingCargo2.attached = true;
-// startingCargo2.followTarget = startingCargo1;
-
-// trailerChain.push(startingCargo1);
-// trailerChain.push(startingCargo2);
+for (const c of levelCargo) {
+  damageSystem.registerCargo(c);
+}
 
 //
 // CAMERA
@@ -389,6 +393,8 @@ function animate() {
 
   stepPhysics();
 
+  damageSystem.update();
+
   //
   // SYNC SHIP
   //
@@ -436,6 +442,18 @@ function animate() {
 }
 
 animate();
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "h") {
+    console.log("DEBUG HIT TEST");
+
+    const firstCargo = cargoChain[0];
+    if (!firstCargo) return;
+
+    firstCargo.health.applyDamage(25);
+    console.log("Cargo HP:", firstCargo.health.hp);
+  }
+});
 
 //
 // RESIZE
