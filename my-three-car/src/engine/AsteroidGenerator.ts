@@ -153,7 +153,7 @@ export class AsteroidGenerator {
 
             const radius = 30 + Math.random() * 80;
 
-            const shade = 80 + Math.random() * 60;
+            const shade = 40 + Math.random() * 60;
 
             const gradient = ctx.createRadialGradient(
                 x,

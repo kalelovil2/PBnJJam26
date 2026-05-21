@@ -20,6 +20,7 @@ import {
 import { CargoGenerator } from "./engine/CargoGenerator.ts";
 import { PhysicsDebug } from "./engine/PhysicsDebug.ts";
 import { DamageSystem } from "./engine/DamageSystem.ts";
+  import { ShipHeadlightSystem } from "./engine/ShipHeadlightSystem";
 
 export const ASTEROID_FIELD_RADIUS = 100;
 export const ASTEROID_SAFE_RADIUS = 15;
@@ -70,7 +71,7 @@ const debugOverlay = new DebugOverlay();
 const light =
   new THREE.DirectionalLight(
     0xffffff,
-    0.7
+    0.575
   );
 
 light.position.set(5, 10, 5);
@@ -80,7 +81,7 @@ scene.add(light);
 const fillLight = new THREE.HemisphereLight(
   0x4466ff,   // sky
   0x221122,   // ground
-  0.25
+  0.2
 );
 
 scene.add(fillLight);
@@ -88,7 +89,7 @@ scene.add(fillLight);
 const ambient =
   new THREE.AmbientLight(
     0xffffff,
-    0.02
+    0.0125
   );
 
 scene.add(ambient);
@@ -101,6 +102,8 @@ scene.fog = new THREE.FogExp2(0x0b0f14, 0.0125);
 
 const ship =
   new Ship(scene, PLAYER_START);
+
+const headlight = new ShipHeadlightSystem(ship, scene);
 
 //
 // STARTING CARGO
@@ -426,6 +429,8 @@ function animate() {
   //
 
   ship.syncFromPhysics();
+
+  headlight.update();
 
   //
   // SYNC CARGO
