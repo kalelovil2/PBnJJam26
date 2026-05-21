@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import wasm from "vite-plugin-wasm";
 
 export default defineConfig({
-  base: "/pbjam26/",
+  base: "/PBnJJam26/",
   plugins: [wasm()],
   build: {
     outDir: "dist"
