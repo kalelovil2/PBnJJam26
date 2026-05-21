@@ -73,6 +73,10 @@ export class Ship {
 
     this.body = world.createRigidBody(bodyDesc);
 
+    (this.body as any).userData = {
+  type: "ship"
+};
+
     const collider = RAPIER.ColliderDesc
       .cuboid(0.5, 0.25, 1)
       .setActiveEvents(

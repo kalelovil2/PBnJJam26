@@ -77,10 +77,18 @@ light.position.set(5, 10, 5);
 
 scene.add(light);
 
+const fillLight = new THREE.HemisphereLight(
+  0x4466ff,   // sky
+  0x221122,   // ground
+  0.25
+);
+
+scene.add(fillLight);
+
 const ambient =
   new THREE.AmbientLight(
     0xffffff,
-    0.01
+    0.02
   );
 
 scene.add(ambient);
@@ -446,10 +454,9 @@ function animate() {
     ship.visual
   );
 
-for (const cargo of levelCargo)
-  {
-cargo.updateDebugLabel(camera);
-}
+  for (const cargo of levelCargo) {
+    cargo.updateDebugLabel(camera);
+  }
 
   //
   // CAMERA

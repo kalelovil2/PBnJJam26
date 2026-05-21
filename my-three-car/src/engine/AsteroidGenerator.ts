@@ -54,6 +54,10 @@ export class AsteroidGenerator {
 
             const body = AsteroidGenerator.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
+(body as any).userData = {
+  type: "asteroid"
+};
+
             this.asteroidPositions.push(mesh.position.clone());
 
             asteroids.push(new Asteroid(mesh, body, planeY));

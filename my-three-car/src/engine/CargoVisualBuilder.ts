@@ -1,22 +1,28 @@
 import * as THREE from "three";
 import { CargoType } from "./Cargo";
 
+export interface CargoVisual extends THREE.Group {
+  hull: THREE.Mesh;
+  frontAnchor: THREE.Object3D;
+  rearAnchor: THREE.Object3D;
+}
+
 export class CargoVisualBuilder {
-  static create(type: CargoType): THREE.Group {
-    const root = new THREE.Group();
+  static create(type: CargoType): CargoVisual {
+    const root = new THREE.Group() as CargoVisual;
 
     const palette = this.getPalette(type);
 
     //
-    // MAIN HULL
+    // MAIN HULL (this is what gets damaged)
     //
     const hullGeo = new THREE.BoxGeometry(
       0.9,
       1,
       1.6,
-      4,
-      4,
-      8
+      6,
+      6,
+      10
     );
 
     const hullMat = new THREE.MeshStandardMaterial({
@@ -28,36 +34,28 @@ export class CargoVisualBuilder {
 
     const hull = new THREE.Mesh(hullGeo, hullMat);
     root.add(hull);
+    root.hull = hull;
 
     //
-    // INNER FRAME (slightly inset "panel shell")
+    // INNER FRAME (visual depth layer)
     //
-    const frameGeo = new THREE.BoxGeometry(
-      0.95,
-      1.05,
-      1.65
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.95, 1.05, 1.65),
+      new THREE.MeshStandardMaterial({
+        color: palette.frame,
+        roughness: 0.9,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.2
+      })
     );
 
-    const frameMat = new THREE.MeshStandardMaterial({
-      color: palette.frame,
-      roughness: 0.9,
-      metalness: 0.2,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.25
-    });
-
-    const frame = new THREE.Mesh(frameGeo, frameMat);
     root.add(frame);
 
     //
-    // CORNER RAILS (very important for silhouette)
+    // CORNER RAILS
     //
-    const railGeo = new THREE.BoxGeometry(
-      0.06,
-      0.06,
-      1.7
-    );
+    const railGeo = new THREE.BoxGeometry(0.06, 0.06, 1.7);
 
     const railMat = new THREE.MeshStandardMaterial({
       color: palette.rail,
@@ -70,7 +68,7 @@ export class CargoVisualBuilder {
       [-0.46, 0.46, 0],
       [ 0.46,-0.46, 0],
       [-0.46,-0.46, 0],
-    ];
+    ] as const;
 
     for (const [x, y, z] of offsets) {
       const rail = new THREE.Mesh(railGeo, railMat);
@@ -79,26 +77,38 @@ export class CargoVisualBuilder {
     }
 
     //
+    // FRONT ANCHOR (tether attaches here)
+    //
+    const frontAnchor = new THREE.Object3D();
+    frontAnchor.position.set(0, 0, -0.85); // front face of cargo
+    root.add(frontAnchor);
+    root.frontAnchor = frontAnchor;
+
+    //
+    // REAR ANCHOR (tether attaches here)
+    //
+    const rearAnchor = new THREE.Object3D();
+    rearAnchor.position.set(0, 0, 0.85); // back face of cargo
+    root.add(rearAnchor);
+    root.rearAnchor = rearAnchor;
+
+    //
     // EMISSIVE STRIP (identity marker)
     //
-    const stripGeo = new THREE.BoxGeometry(
-      0.92,
-      0.06,
-      0.02
+    const strip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.92, 0.06, 0.02),
+      new THREE.MeshStandardMaterial({
+        color: 0x111111,
+        emissive: palette.emissive,
+        emissiveIntensity: 1.5
+      })
     );
 
-    const stripMat = new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      emissive: palette.emissive,
-      emissiveIntensity: 1.5
-    });
-
-    const strip = new THREE.Mesh(stripGeo, stripMat);
     strip.position.set(0, 0.35, 0.81);
     root.add(strip);
 
     //
-    // SIDE MARKER LIGHTS (small readable accents)
+    // SMALL LIGHTS
     //
     const lightGeo = new THREE.BoxGeometry(0.05, 0.05, 0.05);
 
@@ -117,7 +127,7 @@ export class CargoVisualBuilder {
     root.add(l1, l2);
 
     //
-    // subtle tilt variation (breaks uniformity)
+    // slight variation
     //
     root.rotation.y = Math.random() * 0.2 - 0.1;
 

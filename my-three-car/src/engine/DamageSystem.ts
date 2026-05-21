@@ -70,9 +70,6 @@ export class DamageSystem {
         impact
       );
 
-      const cargoA = this.cargoLookup.get(b1.handle);
-      const cargoB = this.cargoLookup.get(b2.handle);
-
       let damageMultiplier = 1.0;
 
       const asteroidCollision =
@@ -85,6 +82,9 @@ export class DamageSystem {
 
       const damage =
         impact * damageMultiplier;
+
+      const cargoA = this.cargoLookup.get(b1.handle);
+      const cargoB = this.cargoLookup.get(b2.handle);
 
       if (cargoA) {
         cargoA.health.applyDamage(damage);

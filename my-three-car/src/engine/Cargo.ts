@@ -6,6 +6,7 @@ import { CargoHealth } from "./CargoHealth";
 import { DEBUG } from "../config";
 import { CargoDamageVisual } from "./CargoDamageVisual";
 import { CargoVisualBuilder } from "./CargoVisualBuilder";
+import type { CargoVisual } from "./CargoVisualBuilder";
 
 export const CargoType = {
   SAFE: "SAFE",
@@ -27,7 +28,7 @@ const DECAL_OFFSET = 0.05;
 
 
 export class Cargo {
-  mesh: THREE.Group;
+  mesh: CargoVisual;
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
   joint: RAPIER.ImpulseJoint | null = null;
@@ -74,24 +75,23 @@ export class Cargo {
 
     document.body.appendChild(this.hpLabel);
 
-    const color =
-      type === CargoType.CONTRABAND
-        ? 0xff0066
-        : 0x00ffaa;
+    // const color =
+    //   type === CargoType.CONTRABAND
+    //     ? 0xff0066
+    //     : 0x00ffaa;
 
-    const material = new THREE.MeshStandardMaterial({
-      color,
-      emissive: new THREE.Color(0x000000),
-      emissiveIntensity: 0,
-    });
+    // const material = new THREE.MeshStandardMaterial({
+    //   color,
+    //   emissive: new THREE.Color(0x000000),
+    //   emissiveIntensity: 0,
+    // });
 
     this.mesh = CargoVisualBuilder.create(type);
-    material.flatShading = true;
 
-    this.damageVisual = new CargoDamageVisual(this.mesh);
+    // damage system should target hull ONLY
+    this.damageVisual = new CargoDamageVisual(this.mesh.hull);
 
-    this.mesh.material = material.clone();
-
+    // set position on whole cargo group
     this.mesh.position.copy(position);
 
     const q = new THREE.Quaternion().setFromEuler(
@@ -103,7 +103,7 @@ export class Cargo {
     );
     this.mesh.rotation.set(q.x, q.y, q.z);
 
-    this.health = new CargoHealth(this.mesh, 100);
+    this.health = new CargoHealth(this.mesh.hull, 100);
 
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(position.x, position.y, position.z)
@@ -478,7 +478,7 @@ export class Cargo {
       this.mesh.userData.debug = this.health.debugString;
     }
 
-    const mat = this.mesh.material as THREE.MeshStandardMaterial;
+    const mat = this.mesh.hull.material as THREE.MeshStandardMaterial;
   }
 
   updateDebugLabel(camera: THREE.Camera) {
