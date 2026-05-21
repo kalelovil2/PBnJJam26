@@ -51,8 +51,10 @@ export class Cargo {
   captureTimer = 0;
 
   defaultCollisionGroups = 0;
-  
+
   damageVisual: CargoDamageVisual;
+
+  hpLabel: HTMLDivElement;
 
   constructor(
     scene: THREE.Scene,
@@ -60,6 +62,16 @@ export class Cargo {
     type: CargoType
   ) {
     this.type = type;
+
+    this.hpLabel = document.createElement("div");
+
+    this.hpLabel.style.position = "absolute";
+    this.hpLabel.style.color = "white";
+    this.hpLabel.style.fontFamily = "monospace";
+    this.hpLabel.style.fontSize = "12px";
+    this.hpLabel.style.pointerEvents = "none";
+
+    document.body.appendChild(this.hpLabel);
 
     const color =
       type === CargoType.CONTRABAND
@@ -72,8 +84,14 @@ export class Cargo {
       emissiveIntensity: 0,
     });
 
-    this.mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 1, 1.6),
+    this.mesh = new THREE.Mesh(new THREE.BoxGeometry(
+      0.9,
+      1,
+      1.6,
+      6,
+      6,
+      10
+    ),
       new THREE.MeshStandardMaterial({
         color
       })
@@ -466,5 +484,35 @@ export class Cargo {
     }
 
     const mat = this.mesh.material as THREE.MeshStandardMaterial;
+  }
+
+  updateDebugLabel(camera: THREE.Camera) {
+
+    if (!DEBUG) {
+      this.hpLabel.style.display = "none";
+      return;
+    }
+
+    this.hpLabel.style.display = "block";
+
+    const pos = this.mesh.position.clone();
+
+    pos.y += 1.2;
+
+    pos.project(camera);
+
+    const x =
+      (pos.x * 0.5 + 0.5)
+      * window.innerWidth;
+
+    const y =
+      (-pos.y * 0.5 + 0.5)
+      * window.innerHeight;
+
+    this.hpLabel.style.left = `${x}px`;
+    this.hpLabel.style.top = `${y}px`;
+
+    this.hpLabel.innerText =
+      `HP ${Math.round(this.health.hp)}`;
   }
 }

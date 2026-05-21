@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { ImpactParticleSystem }from "./engine/ImpactParticleSystem";
+import { ImpactParticleSystem } from "./engine/ImpactParticleSystem";
 
 import { StartMenu } from "./StartMenu";
 import { Ship } from "./engine/Ship.ts";
@@ -136,7 +136,7 @@ for (const c of levelCargo) {
 const impactParticles =
   new ImpactParticleSystem(scene);
 
-  damageSystem.onImpact = (
+damageSystem.onImpact = (
   position,
   normal,
   strength
@@ -322,9 +322,9 @@ function tryAttachCargo() {
       console.log("LAST ELEMENT:", cargoChain[cargoChain.length - 1]);
 
       const previousTrailer =
-  cargoChain.length > 0
-    ? cargoChain[cargoChain.length - 1]
-    : ship;
+        cargoChain.length > 0
+          ? cargoChain[cargoChain.length - 1]
+          : ship;
 
       cargo.attached = true;
 
@@ -446,6 +446,11 @@ function animate() {
     ship.visual
   );
 
+for (const cargo of levelCargo)
+  {
+cargo.updateDebugLabel(camera);
+}
+
   //
   // CAMERA
   //
@@ -466,10 +471,21 @@ window.addEventListener("keydown", (e) => {
     console.log("DEBUG HIT TEST");
 
     const firstCargo = cargoChain[0];
+    const pos = firstCargo.mesh.position;
     if (!firstCargo) return;
 
-    firstCargo.health.applyDamage(25);
-    firstCargo.damageVisual.applyDamage(25 * 0.01);
+    const damage = 25;
+    const impactPos = new THREE.Vector3(
+      pos.x,
+      pos.y,
+      pos.z
+    );
+    firstCargo.health.applyDamage(damage);
+    firstCargo.damageVisual.applyMeshDent(
+      impactPos,
+      impactPos,
+      damage
+    );
     console.log("Cargo HP:", firstCargo.health.hp);
   }
 });

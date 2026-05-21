@@ -28,6 +28,12 @@ export class DamageSystem {
       const b1 = c1.parent();
       const b2 = c2.parent();
 
+      const type1 =
+        (b1 as any).userData?.type;
+
+      const type2 =
+        (b2 as any).userData?.type;
+
       if (!b1 || !b2) return;
 
       const v1 = b1.linvel();
@@ -67,16 +73,37 @@ export class DamageSystem {
       const cargoA = this.cargoLookup.get(b1.handle);
       const cargoB = this.cargoLookup.get(b2.handle);
 
-      const damage = impact * 2.0;
+      let damageMultiplier = 1.0;
+
+      const asteroidCollision =
+        type1 === "asteroid" ||
+        type2 === "asteroid";
+
+      if (asteroidCollision) {
+        damageMultiplier = 4.0;
+      }
+
+      const damage =
+        impact * damageMultiplier;
 
       if (cargoA) {
         cargoA.health.applyDamage(damage);
-        cargoA.damageVisual.applyDamage(damage * 0.01);
+
+        cargoA.damageVisual.applyMeshDent(
+          impactPos,
+          normal,
+          damage
+        );
       }
 
       if (cargoB) {
         cargoB.health.applyDamage(damage);
-        cargoB.damageVisual.applyDamage(damage * 0.01);
+
+        cargoB.damageVisual.applyMeshDent(
+          impactPos,
+          normal,
+          damage
+        );
       }
     });
   }
