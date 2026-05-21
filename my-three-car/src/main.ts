@@ -93,6 +93,8 @@ const ambient =
 
 scene.add(ambient);
 
+scene.fog = new THREE.FogExp2(0x0b0f14, 0.0125);
+
 //
 // SHIP
 //
