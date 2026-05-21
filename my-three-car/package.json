@@ -7,10 +7,13 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "@types/three": "^0.184.0",
     "esbuild": "^0.28.0",
+    "gh-pages": "^6.3.0",
     "rollup": "^4.60.2",
     "typescript": "~6.0.2",
     "vite": "^8.0.10",
