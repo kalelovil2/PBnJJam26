@@ -5,6 +5,7 @@ import type { Ship } from "./Ship";
 import { CargoHealth } from "./CargoHealth";
 import { DEBUG } from "../config";
 import { CargoDamageVisual } from "./CargoDamageVisual";
+import { CargoVisualBuilder } from "./CargoVisualBuilder";
 
 export const CargoType = {
   SAFE: "SAFE",
@@ -26,7 +27,7 @@ const DECAL_OFFSET = 0.05;
 
 
 export class Cargo {
-  mesh: THREE.Mesh;
+  mesh: THREE.Group;
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
   joint: RAPIER.ImpulseJoint | null = null;
@@ -84,18 +85,8 @@ export class Cargo {
       emissiveIntensity: 0,
     });
 
-    this.mesh = new THREE.Mesh(new THREE.BoxGeometry(
-      0.9,
-      1,
-      1.6,
-      6,
-      6,
-      10
-    ),
-      new THREE.MeshStandardMaterial({
-        color
-      })
-    );
+    this.mesh = CargoVisualBuilder.create(type);
+    material.flatShading = true;
 
     this.damageVisual = new CargoDamageVisual(this.mesh);
 
@@ -137,6 +128,10 @@ export class Cargo {
       },
       false
     );
+
+    (this.body as any).userData = {
+  type: "cargo"
+};
 
     const colliderDesc = RAPIER.ColliderDesc
       .cuboid(0.5, 0.5, 1)
