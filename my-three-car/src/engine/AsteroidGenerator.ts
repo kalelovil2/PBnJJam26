@@ -2,10 +2,12 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
 import { getWorld } from "../physics";
 import { Asteroid } from "./Asteroid";
-import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "../main";
+import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "../GameConfig";
 
 export class AsteroidGenerator {
     static asteroidPositions: THREE.Vector3[] = [];
+
+    speedMultiplier = 1;
 
     static createAsteroids(scene: THREE.Scene, num: number) {
         const asteroids: Asteroid[] = [];
@@ -301,10 +303,17 @@ export class AsteroidGenerator {
             .setCanSleep(false);
 
         const body = world.createRigidBody(bodyDesc);
-        body.setLinvel(
-            { x: startingDrift.x, y: startingDrift.y, z: startingDrift.z },
-            false
-        );
+const speedMultiplier =
+  THREE.MathUtils.lerp(0.9, 1.25, Math.random());
+
+body.setLinvel(
+  {
+    x: startingDrift.x * speedMultiplier,
+    y: 0,
+    z: startingDrift.z * speedMultiplier
+  },
+  true
+);
         body.setAngvel(
             { x: startingRotation.x, y: startingRotation.y, z: startingRotation.z },
             false

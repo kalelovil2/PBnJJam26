@@ -11,6 +11,7 @@ import { getWorld, initPhysics, stepPhysics, world } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";
 import { AsteroidGenerator } from "./engine/AsteroidGenerator";
 import { CheckpointGenerator } from "./engine/CheckpointGenerator.ts";
+import { CometField } from "./engine/CometField";
 
 import {
   Cargo,
@@ -21,15 +22,10 @@ import { CargoGenerator } from "./engine/CargoGenerator.ts";
 import { PhysicsDebug } from "./engine/PhysicsDebug.ts";
 import { DamageSystem } from "./engine/DamageSystem.ts";
   import { ShipHeadlightSystem } from "./engine/ShipHeadlightSystem";
-
-export const ASTEROID_FIELD_RADIUS = 100;
-export const ASTEROID_SAFE_RADIUS = 15;
+import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "./GameConfig.ts";
 
 const ASTEROID_COUNT = 280;
 const CARGO_COUNT = 30;
-
-export const PLAYER_START =
-  new THREE.Vector3(0, 0, -4);
 
 const startMenu = new StartMenu();
 
@@ -170,6 +166,8 @@ const asteroids =
     scene,
     ASTEROID_COUNT
   );
+
+  const cometField = new CometField(scene, 20);
 
 //
 // CHECKPOINTS
@@ -451,6 +449,8 @@ function animate() {
   for (const asteroid of asteroids) {
     asteroid.update();
   }
+
+  cometField.update(ship.mesh.position);
 
   //
   // DEBUG
