@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-import { getWorld } from "../physics";
 import { ThrusterParticle } from "./ThrusterParticle";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { getWorld } from "../../physics";
 
 export class Ship {
   static FORWARD_Z = -1;
