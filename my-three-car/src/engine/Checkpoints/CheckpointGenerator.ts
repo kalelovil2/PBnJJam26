@@ -1,33 +1,24 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-
 import { Checkpoint } from "./Checkpoint";
-import { Asteroid } from "./Asteroid";
+import type { Asteroid } from "../SpaceObjects/Asteroid";
+import { ASTEROID_SAFE_RADIUS, CHECKPOINT_CLEARANCE, CHECKPOINT_COUNT, LEVEL_SIZE, PLAYER_START } from "../../GameConfig";
 
 export class CheckpointGenerator {
   static async spawnCheckpoints(
     scene: THREE.Scene,
     world: RAPIER.World,
-    asteroids: Asteroid[],
-    count: number,
-    levelRadius: number
+    asteroids: Asteroid[]
   ): Promise<Checkpoint[]> {
     const checkpoints: Checkpoint[] = [];
 
     // checkpoints should not cluster together
-    const minCheckpointDistance = levelRadius * 0.25;
-
-    // keep checkpoints away from asteroids
-    const asteroidClearance = 10;
-
-    // safe space around player spawn
-    const playerStart = new THREE.Vector3(0, 0, -4);
-    const playerSafeRadius = 15;
+    const minCheckpointDistance = LEVEL_SIZE * 0.25;
 
     // avoid edge-of-map spawns
-    const usableRadius = levelRadius * 0.75;
+    const usableRadius = LEVEL_SIZE * 0.75;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < CHECKPOINT_COUNT; i++) {
       let position = new THREE.Vector3();
       let valid = false;
 
@@ -47,8 +38,8 @@ export class CheckpointGenerator {
 
         // avoid player spawn
         if (
-          position.distanceTo(playerStart) <
-          playerSafeRadius
+          position.distanceTo(PLAYER_START) <
+          ASTEROID_SAFE_RADIUS
         ) {
           valid = false;
         }
@@ -71,7 +62,7 @@ export class CheckpointGenerator {
           for (const asteroid of asteroids) {
             if (
               asteroid.mesh.position.distanceTo(position) <
-              asteroidClearance
+              CHECKPOINT_CLEARANCE
             ) {
               valid = false;
               break;

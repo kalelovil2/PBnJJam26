@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-import { getWorld } from "../physics";
+import { getWorld } from "../../physics";
 
 export class Comet {
     mesh: THREE.Mesh;

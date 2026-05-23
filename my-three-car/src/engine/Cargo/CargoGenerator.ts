@@ -1,29 +1,21 @@
 import * as THREE from "three";
 
 import { Cargo, CargoType } from "./Cargo";
-import { Asteroid } from "./Asteroid";
-import { Checkpoint } from "./Checkpoint";
+import { Asteroid } from "../SpaceObjects/Asteroid";
+import { Checkpoint } from "../Checkpoints/Checkpoint";
+import { ASTEROID_CLEARANCE, CARGO_CLEARANCE, CARGO_COUNT, CHECKPOINT_CLEARANCE, LEVEL_SIZE, PLAYER_CLEARANCE, PLAYER_START } from "../../GameConfig";
 
 export class CargoGenerator {
   static spawnCargo(
     scene: THREE.Scene,
     asteroids: Asteroid[],
     checkpoints: Checkpoint[],
-    count: number,
-    levelRadius: number
   ): Cargo[] {
     const cargoList: Cargo[] = [];
 
-    const playerStart = new THREE.Vector3(0, 0, -4);
+    const usableRadius = LEVEL_SIZE * 0.75;
 
-    const playerClearance = 15;
-    const asteroidClearance = 8;
-    const checkpointClearance = 10;
-    const cargoClearance = 6;
-
-    const usableRadius = levelRadius * 0.75;
-
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < CARGO_COUNT; i++) {
       let valid = false;
 
       let position = new THREE.Vector3();
@@ -55,8 +47,8 @@ export class CargoGenerator {
 
         // avoid player
         if (
-          position.distanceTo(playerStart) <
-          playerClearance
+          position.distanceTo(PLAYER_START) <
+          PLAYER_CLEARANCE
         ) {
           valid = false;
         }
@@ -67,7 +59,7 @@ export class CargoGenerator {
             if (
               asteroid.mesh.position.distanceTo(
                 position
-              ) < asteroidClearance
+              ) < ASTEROID_CLEARANCE
             ) {
               valid = false;
               break;
@@ -81,7 +73,7 @@ export class CargoGenerator {
             if (
               checkpoint.mesh.position.distanceTo(
                 position
-              ) < checkpointClearance
+              ) < CHECKPOINT_CLEARANCE
             ) {
               valid = false;
               break;
@@ -95,7 +87,7 @@ export class CargoGenerator {
             if (
               cargo.mesh.position.distanceTo(
                 position
-              ) < cargoClearance
+              ) < CARGO_CLEARANCE
             ) {
               valid = false;
               break;

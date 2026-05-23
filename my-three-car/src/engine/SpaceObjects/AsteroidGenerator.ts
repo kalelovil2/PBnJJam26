@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-import { getWorld } from "../physics";
+import { LEVEL_SIZE, PLAYER_START } from "../../GameConfig";
+import { getWorld } from "../../physics";
 import { Asteroid } from "./Asteroid";
-import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "../GameConfig";
 
 export class AsteroidGenerator {
     static asteroidPositions: THREE.Vector3[] = [];
@@ -29,9 +29,9 @@ export class AsteroidGenerator {
 
             while (!valid) {
                 position = new THREE.Vector3(
-                    (Math.random() - 0.5) * ASTEROID_FIELD_RADIUS * 2,
+                    (Math.random() - 0.5) * LEVEL_SIZE * 2,
                     planeY,
-                    (Math.random() - 0.5) * ASTEROID_FIELD_RADIUS * 2
+                    (Math.random() - 0.5) * LEVEL_SIZE * 2
                 );
 
                 valid =

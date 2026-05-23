@@ -1,13 +1,11 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-import { getWorld } from "../physics";
-import type { Ship } from "./Ship";
-import { CargoHealth } from "./CargoHealth";
-import { DEBUG } from "../config";
+import { CargoVisualBuilder, type CargoVisual } from "./CargoVisualBuilder";
 import { CargoDamageVisual } from "./CargoDamageVisual";
-import { CargoVisualBuilder } from "./CargoVisualBuilder";
-import type { CargoVisual } from "./CargoVisualBuilder";
-
+import { DEBUG } from "../../config";
+import { getWorld } from "../../physics";
+import type { Ship } from "../Ship/Ship";
+import { CargoHealth } from "./CargoHealth";
 export const CargoType = {
   SAFE: "SAFE",
   CONTRABAND: "CONTRABAND"

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { world, eventQueue } from "../physics";
-import { Cargo } from "./Cargo";
-import { Comet } from "./Comet";
+import { Comet } from "./SpaceObjects/Comet";
+import type { Cargo } from "./Cargo/Cargo";
 
 export class DamageSystem {
   cargoLookup = new Map<number, Cargo>();

@@ -4,8 +4,6 @@ import { Comet } from "./Comet";
 export class CometField {
   private comets: Comet[] = [];
   
-private scene: THREE.Scene;
-
   constructor(
     scene: THREE.Scene,
     count = 8

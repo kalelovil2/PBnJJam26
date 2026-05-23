@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { Cargo } from "./Cargo";
-import { Ship } from "./Ship";
+import type { Ship } from "../Ship/Ship";
 
 export class CargoTetherRenderer {
   scene: THREE.Scene;

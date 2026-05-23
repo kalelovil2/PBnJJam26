@@ -2,30 +2,26 @@ import * as THREE from "three";
 import { ImpactParticleSystem } from "./engine/ImpactParticleSystem";
 
 import { StartMenu } from "./StartMenu";
-import { Ship } from "./engine/Ship.ts";
-import { CargoTetherRenderer } from "./engine/CargoTetherRenderer";
-import RAPIER from "@dimforge/rapier3d";
+import { CargoTetherRenderer } from "./engine/Cargo/CargoTetherRenderer.ts";
 
-import { getWorld, initPhysics, stepPhysics, world } from "./physics";
+import { getWorld, initPhysics, stepPhysics } from "./physics";
 
-import { DebugOverlay } from "./engine/DebugOverlay";
-import { AsteroidGenerator } from "./engine/AsteroidGenerator";
-import { CheckpointGenerator } from "./engine/CheckpointGenerator.ts";
-import { CometField } from "./engine/CometField";
+import { DebugOverlay } from "./engine/DebugOverlay";;
+import { CometField } from "./engine/SpaceObjects/CometField.ts";
 
 import {
   Cargo,
   CargoType
-} from "./engine/Cargo";
+} from "./engine/Cargo/Cargo";
 
-import { CargoGenerator } from "./engine/CargoGenerator.ts";
+import { CargoGenerator } from "./engine/Cargo/CargoGenerator.ts";
 import { PhysicsDebug } from "./engine/PhysicsDebug.ts";
 import { DamageSystem } from "./engine/DamageSystem.ts";
-  import { ShipHeadlightSystem } from "./engine/ShipHeadlightSystem";
-import { ASTEROID_FIELD_RADIUS, PLAYER_START } from "./GameConfig.ts";
-
-const ASTEROID_COUNT = 280;
-const CARGO_COUNT = 30;
+  import { ShipHeadlightSystem } from "./engine/Ship/ShipHeadlightSystem.ts";
+import { ASTEROID_COUNT, CARGO_COUNT, CHECKPOINT_COUNT, COMET_COUNT, LEVEL_SIZE, PLAYER_START } from "./GameConfig.ts";
+import { Ship } from "./engine/Ship/Ship.ts";
+import { CheckpointGenerator } from "./engine/Checkpoints/CheckpointGenerator.ts";
+import { AsteroidGenerator } from "./engine/SpaceObjects/AsteroidGenerator.ts";
 
 const startMenu = new StartMenu();
 
@@ -167,8 +163,7 @@ const asteroids =
     ASTEROID_COUNT
   );
 
-  const cometField = new CometField(scene, 20);
-
+  const cometField = new CometField(scene, COMET_COUNT);
 //
 // CHECKPOINTS
 //
@@ -178,8 +173,8 @@ const checkpoints =
     scene,
     getWorld(),
     asteroids,
-    10,
-    100
+    CHECKPOINT_COUNT,
+    LEVEL_SIZE
   );
 
 //
@@ -192,7 +187,7 @@ const spawnedCargo =
     asteroids,
     checkpoints,
     CARGO_COUNT,
-    ASTEROID_FIELD_RADIUS
+    LEVEL_SIZE
   );
 
 levelCargo.push(...spawnedCargo);
