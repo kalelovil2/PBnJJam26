@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-
 import { getWorld } from "../physics";
 
 export class Comet {
@@ -10,10 +9,15 @@ export class Comet {
     collider: RAPIER.Collider;
 
     private trail: THREE.Vector3[] = [];
-    private trailLength = 10;
+    private trailLength = 80;
     private trailMesh: THREE.Mesh;
     private trailGeo: THREE.BufferGeometry;
     private trailMat: THREE.MeshBasicMaterial;
+    private trailGlowMesh: THREE.Mesh;
+    private trailGlowGeo: THREE.BufferGeometry;
+    private trailGlowMat: THREE.MeshBasicMaterial;
+
+    alive: boolean = true;
 
     private lockedY = 0;
 
@@ -38,9 +42,8 @@ export class Comet {
         );
 
         this.trailGeo = new THREE.BufferGeometry();
-
         this.trailMat = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
+            color: 0xbfd8ff,
             transparent: true,
             opacity: 0.8,
             depthWrite: false,
@@ -51,6 +54,18 @@ export class Comet {
 
         this.trailMesh = new THREE.Mesh(this.trailGeo, this.trailMat);
         scene.add(this.trailMesh);
+
+        this.trailGlowGeo = new THREE.BufferGeometry();
+        this.trailGlowMat = new THREE.MeshBasicMaterial({
+        color: 0x88ccff,
+        transparent: true,
+        opacity: 0.6,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+        });
+
+        this.trailGlowMesh = new THREE.Mesh(this.trailGlowGeo, this.trailGlowMat);
+        scene.add(this.trailGlowMesh);
 
         scene.add(this.mesh);
 
@@ -165,6 +180,19 @@ export class Comet {
         );
     }
 
+    destroy() {
+  if (!this.alive) return;
+
+  this.alive = false;
+
+  const world = getWorld();
+
+  world.removeRigidBody(this.body);
+
+  this.mesh.removeFromParent();
+  this.trailMesh.removeFromParent();
+}
+
     update() {
         //
         // SYNC VISUALS FROM PHYSICS
@@ -208,55 +236,66 @@ export class Comet {
         console.log("comet pos:", pos.x, pos.y, pos.z);
     }
 
-    private updateTrailMesh() {
+private updateTrailMesh() {
+  if (this.trail.length < 2) return;
 
-        if (this.trail.length < 2) return;
+  const core: number[] = [];
+  const glow: number[] = [];
 
-        const positions: number[] = [];
+  for (let i = 0; i < this.trail.length - 1; i++) {
+    const a = this.trail[i];
+    const b = this.trail[i + 1];
 
-        for (let i = 0; i < this.trail.length - 1; i++) {
-            const a = this.trail[i];
-            const b = this.trail[i + 1];
+    const t = i / this.trail.length;
 
-            // width fades along trail
-            const t = i / this.trail.length;
-            const width = (1 - t) * 0.15;
+    const coreWidth = (1 - t) * 0.08;
+    const glowWidth = (1 - t) * 0.18;
 
-            const dir = new THREE.Vector3()
-                .subVectors(b, a)
-                .normalize();
+    this.buildStrip(core, a, b, coreWidth);
+    this.buildStrip(glow, a, b, glowWidth);
+  }
 
-            const side = new THREE.Vector3(
-                -dir.z,
-                0,
-                dir.x
-            ).multiplyScalar(width);
+  this.trailGeo.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(core, 3)
+  );
+  this.trailGeo.computeBoundingSphere();
 
-            // quad strip
-            positions.push(
-                a.x + side.x, a.y, a.z + side.z,
-                a.x - side.x, a.y, a.z - side.z,
-                b.x + side.x, b.y, b.z + side.z,
-
-                b.x + side.x, b.y, b.z + side.z,
-                a.x - side.x, a.y, a.z - side.z,
-                b.x - side.x, b.y, b.z - side.z
-            );
-        }
-
-        this.trailGeo.setAttribute(
-            "position",
-            new THREE.Float32BufferAttribute(positions, 3)
-        );
-        this.trailGeo.attributes.position.needsUpdate = true;
-this.trailGeo.computeBoundingSphere();
-
-        this.trailGeo.computeVertexNormals();
-
-        console.log("trail mesh update, points:", positions.length);
-    }
+  this.trailGlowGeo.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(glow, 3)
+  );
+  this.trailGlowGeo.computeBoundingSphere();
+}
 
     private rand(min: number, max: number) {
         return min + Math.random() * (max - min);
     }
+
+    private buildStrip(
+  positions: number[],
+  a: THREE.Vector3,
+  b: THREE.Vector3,
+  width: number
+) {
+  const dir = new THREE.Vector3()
+    .subVectors(b, a)
+    .normalize();
+
+  const side = new THREE.Vector3(
+    -dir.z,
+    0,
+    dir.x
+  ).multiplyScalar(width);
+
+  positions.push(
+    a.x + side.x, a.y, a.z + side.z,
+    a.x - side.x, a.y, a.z - side.z,
+    b.x + side.x, b.y, b.z + side.z,
+
+    b.x + side.x, b.y, b.z + side.z,
+    a.x - side.x, a.y, a.z - side.z,
+    b.x - side.x, b.y, b.z - side.z
+  );
+}
 }

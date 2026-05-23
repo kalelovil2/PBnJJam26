@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { world, eventQueue } from "../physics";
-import RAPIER from "@dimforge/rapier3d";
 import { Cargo } from "./Cargo";
+import { Comet } from "./Comet";
 
 export class DamageSystem {
   cargoLookup = new Map<number, Cargo>();
@@ -104,6 +104,17 @@ export class DamageSystem {
           normal,
           damage
         );
+      }
+
+      const o1 = b1.userData;
+      const o2 = b2.userData;
+
+      if (o1 instanceof Comet) {
+        o1.destroy();
+      }
+
+      if (o2 instanceof Comet) {
+        o2.destroy();
       }
     });
   }
