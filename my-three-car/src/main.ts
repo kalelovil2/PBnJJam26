@@ -160,7 +160,6 @@ damageSystem.onImpact = (
 const asteroids =
   AsteroidGenerator.createAsteroids(
     scene,
-    ASTEROID_COUNT
   );
 
   const cometField = new CometField(scene, COMET_COUNT);
@@ -172,9 +171,7 @@ const checkpoints =
   await CheckpointGenerator.spawnCheckpoints(
     scene,
     getWorld(),
-    asteroids,
-    CHECKPOINT_COUNT,
-    LEVEL_SIZE
+    asteroids
   );
 
 //
@@ -185,9 +182,7 @@ const spawnedCargo =
   CargoGenerator.spawnCargo(
     scene,
     asteroids,
-    checkpoints,
-    CARGO_COUNT,
-    LEVEL_SIZE
+    checkpoints
   );
 
 levelCargo.push(...spawnedCargo);
