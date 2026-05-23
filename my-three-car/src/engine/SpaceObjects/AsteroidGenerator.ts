@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-import { LEVEL_SIZE, PLAYER_START } from "../../GameConfig";
+import { ASTEROID_COUNT, LEVEL_SIZE, PLAYER_START } from "../../GameConfig";
 import { getWorld } from "../../physics";
 import { Asteroid } from "./Asteroid";
 
@@ -9,10 +9,10 @@ export class AsteroidGenerator {
 
     speedMultiplier = 1;
 
-    static createAsteroids(scene: THREE.Scene, num: number) {
+    static createAsteroids(scene: THREE.Scene) {
         const asteroids: Asteroid[] = [];
 
-        for (let i = 0; i < num; i++) {
+        for (let i = 0; i < ASTEROID_COUNT; i++) {
             const radius = 0.6 + Math.random() * 1.25;
 
             const mesh = this.createAsteroidMesh(
