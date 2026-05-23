@@ -9,6 +9,16 @@ export class AsteroidGenerator {
 
     speedMultiplier = 1;
 
+    static asteroidTexture = this.createAsteroidTexture();
+static asteroidBump = this.createAsteroidBumpMap();
+        static asteroidMaterial = new THREE.MeshStandardMaterial({
+            map: this.asteroidTexture,
+            bumpMap: this.asteroidBump,
+            bumpScale: 1.25,
+            flatShading: true,
+            roughness: 1
+        });
+
     static createAsteroids(scene: THREE.Scene) {
         const asteroids: Asteroid[] = [];
 
@@ -73,7 +83,7 @@ export class AsteroidGenerator {
         roughness = 0.5,
         detail = 3
     ) {
-        const geometry = new THREE.IcosahedronGeometry(radius, 20);
+        const geometry = new THREE.IcosahedronGeometry(radius, 12);
 
         const pos = geometry.attributes.position;
 
@@ -86,11 +96,13 @@ export class AsteroidGenerator {
             0.7 + Math.random() * 0.8
         );
 
+        const normal = new THREE.Vector3();
+
         for (let i = 0; i < pos.count; i++) {
             vertex.fromBufferAttribute(pos, i);
 
             // normalized direction
-            const normal = vertex.clone().normalize();
+            normal.copy(vertex).normalize();
 
             // smooth pseudo-noise
             const noise =
@@ -113,15 +125,7 @@ export class AsteroidGenerator {
 
         geometry.computeVertexNormals();
 
-        const material = new THREE.MeshStandardMaterial({
-            map: this.createAsteroidTexture(),
-            bumpMap: this.createAsteroidBumpMap(),
-            bumpScale: 1.25,
-            flatShading: true,
-            roughness: 1
-        });
-
-        return new THREE.Mesh(geometry, material);
+        return new THREE.Mesh(geometry, this.asteroidMaterial);
     }
 
     static createAsteroidTexture() {
