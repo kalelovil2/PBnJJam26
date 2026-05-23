@@ -2,6 +2,9 @@ export class StartMenu {
   overlay: HTMLDivElement;
   button: HTMLButtonElement;
 
+  private loadingBarContainer: HTMLDivElement;
+  private loadingBarFill: HTMLDivElement;
+
   constructor() {
     this.overlay = document.createElement("div");
 
@@ -25,14 +28,30 @@ export class StartMenu {
 
     this.button = document.createElement("button");
     this.button.textContent = "START";
-
     this.button.style.padding = "16px 32px";
     this.button.style.fontSize = "24px";
-    this.button.style.cursor = "pointer";
+
+    // -------------------------
+    // LOADING BAR
+    // -------------------------
+    this.loadingBarContainer = document.createElement("div");
+    this.loadingBarContainer.style.width = "320px";
+    this.loadingBarContainer.style.height = "10px";
+    this.loadingBarContainer.style.border = "1px solid white";
+    this.loadingBarContainer.style.marginTop = "24px";
+    this.loadingBarContainer.style.display = "none";
+
+    this.loadingBarFill = document.createElement("div");
+    this.loadingBarFill.style.width = "0%";
+    this.loadingBarFill.style.height = "100%";
+    this.loadingBarFill.style.background = "white";
+
+    this.loadingBarContainer.appendChild(this.loadingBarFill);
 
     this.overlay.appendChild(title);
     this.overlay.appendChild(subtitle);
     this.overlay.appendChild(this.button);
+    this.overlay.appendChild(this.loadingBarContainer);
   }
 
   async show(): Promise<void> {
@@ -41,12 +60,38 @@ export class StartMenu {
     return new Promise((resolve) => {
       this.button.addEventListener(
         "click",
-        () => {
+        async () => {
+          this.button.disabled = true;
+          this.button.style.display = "none";
+          this.loadingBarContainer.style.display = "block";
+
+          // IMPORTANT: force browser paint BEFORE loading starts
+          await new Promise(requestAnimationFrame);
+
+          await this.runFakeLoading();
+
           this.overlay.remove();
           resolve();
         },
         { once: true }
       );
+    });
+  }
+
+  private runFakeLoading(): Promise<void> {
+    return new Promise((resolve) => {
+      let progress = 0;
+
+      const interval = setInterval(() => {
+        progress += 0.02;
+
+        this.loadingBarFill.style.width = `${progress * 100}%`;
+
+        if (progress >= 1) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 16);
     });
   }
 }
