@@ -166,7 +166,7 @@ const asteroids =
 //
 // CHECKPOINTS
 //
-console.log("ASTEROIDS 1:", asteroids);
+
 const checkpoints =
   await CheckpointGenerator.spawnCheckpoints(
     scene,
@@ -177,7 +177,7 @@ const checkpoints =
 //
 // RANDOM CARGO
 //
-console.log("ASTEROIDS 2:", asteroids);
+
 const spawnedCargo =
   CargoGenerator.spawnCargo(
     scene,
