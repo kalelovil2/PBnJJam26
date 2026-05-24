@@ -7,8 +7,6 @@ export class Asteroid {
 
   planeY: number;
 
-  position: THREE.Vector3;
-
   constructor(
     mesh: THREE.Mesh,
     body: RAPIER.RigidBody,

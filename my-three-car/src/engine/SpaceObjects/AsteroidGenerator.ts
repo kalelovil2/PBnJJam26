@@ -1,520 +1,339 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
-
-import {
-    ASTEROID_COUNT,
-    LEVEL_SIZE,
-    PLAYER_START
-} from "../../GameConfig";
-
+import { ASTEROID_COUNT, LEVEL_SIZE, PLAYER_START } from "../../GameConfig";
 import { getWorld } from "../../physics";
+import { Asteroid } from "./Asteroid";
 
 export class AsteroidGenerator {
     static asteroidPositions: THREE.Vector3[] = [];
 
-    // ----------------------------------------
-    // shared textures/material
-    // ----------------------------------------
+    speedMultiplier = 1;
 
-    static asteroidTexture =
-        AsteroidGenerator.createAsteroidTexture();
-
-    static asteroidBump =
-        AsteroidGenerator.createAsteroidBumpMap();
-
-    static asteroidMaterial =
-        new THREE.MeshStandardMaterial({
-            map: AsteroidGenerator.asteroidTexture,
-            bumpMap: AsteroidGenerator.asteroidBump,
+    static asteroidTexture = this.createAsteroidTexture();
+static asteroidBump = this.createAsteroidBumpMap();
+        static asteroidMaterial = new THREE.MeshStandardMaterial({
+            map: this.asteroidTexture,
+            bumpMap: this.asteroidBump,
             bumpScale: 1.25,
             flatShading: true,
             roughness: 1
         });
 
-    // ----------------------------------------
-    // reusable geometry variants
-    // ----------------------------------------
-
-    static asteroidGeometries: THREE.BufferGeometry[] = [];
-
-    static generateGeometryVariants() {
-        this.asteroidGeometries = [];
-
-        for (let i = 0; i < 8; i++) {
-            const radius = 0.6 + Math.random() * 1.25;
-
-            const geometry = this.createAsteroidGeometry(
-                radius,
-                0.08 + Math.random() * 0.15,
-                1 + Math.random() * 3
-            );
-
-            this.asteroidGeometries.push(geometry);
-        }
-    }
-
-    // ----------------------------------------
-    // asteroid creation
-    // ----------------------------------------
-
     static createAsteroids(scene: THREE.Scene) {
-        this.generateGeometryVariants();
-
-        const instancedMeshes: THREE.InstancedMesh[] = [];
-
-        // one instanced mesh per geometry variant
-        for (const geometry of this.asteroidGeometries) {
-            const mesh = new THREE.InstancedMesh(
-                geometry,
-                this.asteroidMaterial,
-                ASTEROID_COUNT
-            );
-
-            mesh.instanceMatrix.setUsage(
-                THREE.DynamicDrawUsage
-            );
-
-            scene.add(mesh);
-
-            instancedMeshes.push(mesh);
-        }
-
-        const counts =
-            new Array(instancedMeshes.length).fill(0);
-
-        const dummy = new THREE.Object3D();
-
-        const asteroids: any[] = [];
+        const asteroids: Asteroid[] = [];
 
         for (let i = 0; i < ASTEROID_COUNT; i++) {
+            const radius = 0.6 + Math.random() * 1.25;
+
+            const mesh = this.createAsteroidMesh(
+                radius,
+                0.08 + Math.random() * 0.15, // roughness
+                1 + Math.random() * 3       // detail
+            );
             const planeY = sampleAsteroidY();
 
             const minPlayerDistance = 12;
 
-            let position = new THREE.Vector3();
-
+            var position: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
             let valid = false;
 
             while (!valid) {
-                position.set(
-                    (Math.random() - 0.5) *
-                        LEVEL_SIZE *
-                        2,
+                position = new THREE.Vector3(
+                    (Math.random() - 0.5) * LEVEL_SIZE * 2,
                     planeY,
-                    (Math.random() - 0.5) *
-                        LEVEL_SIZE *
-                        2
+                    (Math.random() - 0.5) * LEVEL_SIZE * 2
                 );
 
                 valid =
-                    position.distanceTo(
-                        PLAYER_START
-                    ) > minPlayerDistance;
+                    position.distanceTo(PLAYER_START) >
+                    minPlayerDistance;
             }
 
-            // choose random geometry variant
-            const variantIndex = Math.floor(
-                Math.random() *
-                    instancedMeshes.length
+            mesh.position.set(position.x, position.y, position.z);
+            scene.add(mesh);
+
+            const startingRotation = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3
             );
 
-            const instancedMesh =
-                instancedMeshes[variantIndex];
-
-            const instanceIndex =
-                counts[variantIndex]++;
-
-            // transform
-            dummy.position.copy(position);
-
-            dummy.rotation.set(
-                Math.random() * Math.PI,
-                Math.random() * Math.PI,
-                Math.random() * Math.PI
+            const startingDrift = new THREE.Vector3(
+                (Math.random() - 0.5) * 1.25,
+                0,
+                (Math.random() - 0.5) * 1.25
             );
 
-            const scale =
-                0.8 + Math.random() * 1.5;
+            const body = AsteroidGenerator.createAsteroidPhysics(mesh.position, radius, startingRotation, startingDrift);
 
-            dummy.scale.setScalar(scale);
+(body as any).userData = {
+  type: "asteroid"
+};
 
-            dummy.updateMatrix();
+            this.asteroidPositions.push(mesh.position.clone());
 
-            instancedMesh.setMatrixAt(
-                instanceIndex,
-                dummy.matrix
-            );
-
-            // physics
-            const startingRotation =
-                new THREE.Vector3(
-                    (Math.random() - 0.5) *
-                        0.3,
-                    (Math.random() - 0.5) *
-                        0.3,
-                    (Math.random() - 0.5) *
-                        0.3
-                );
-
-            const startingDrift =
-                new THREE.Vector3(
-                    (Math.random() - 0.5) *
-                        1.25,
-                    0,
-                    (Math.random() - 0.5) *
-                        1.25
-                );
-
-            const body =
-                this.createAsteroidPhysics(
-                    position,
-                    scale,
-                    startingRotation,
-                    startingDrift
-                );
-
-            (body as any).userData = {
-                type: "asteroid"
-            };
-
-            this.asteroidPositions.push(
-                position.clone()
-            );
-
-            asteroids.push({
-                body,
-                instancedMesh,
-                instanceIndex,
-                position: position.clone()
-            });
+            asteroids.push(new Asteroid(mesh, body, planeY));
         }
 
-        // important
-        for (const mesh of instancedMeshes) {
-            mesh.instanceMatrix.needsUpdate = true;
-        }
-
-        console.log("Asteroid Variant Count: ", this.asteroidGeometries.length);
-        console.log("Asteroid Instance Count: ", asteroids.length);
         return asteroids;
     }
 
-    // ----------------------------------------
-    // update transforms from physics
-    // ----------------------------------------
-
-    static updateAsteroids(
-        asteroids: any[]
-    ) {
-        const dummy = new THREE.Object3D();
-
-        const dirtyMeshes =
-            new Set<THREE.InstancedMesh>();
-
-        for (const asteroid of asteroids) {
-            const body = asteroid.body;
-
-            const pos = body.translation();
-            
-            asteroid.position.set(
-                pos.x,
-                pos.y,
-                pos.z
-            );
-
-            const rot = body.rotation();
-
-            dummy.position.set(
-                pos.x,
-                pos.y,
-                pos.z
-            );
-
-            dummy.quaternion.set(
-                rot.x,
-                rot.y,
-                rot.z,
-                rot.w
-            );
-
-            dummy.scale.setScalar(1);
-
-            dummy.updateMatrix();
-
-            asteroid.instancedMesh.setMatrixAt(
-                asteroid.instanceIndex,
-                dummy.matrix
-            );
-
-            dirtyMeshes.add(
-                asteroid.instancedMesh
-            );
-        }
-
-        // mark dirty ONCE per mesh
-        for (const mesh of dirtyMeshes) {
-            mesh.instanceMatrix.needsUpdate =
-                true;
-        }
-    }
-
-    // ----------------------------------------
-    // geometry generation
-    // ----------------------------------------
-
-    static createAsteroidGeometry(
+    static createAsteroidMesh(
         radius = 1,
         roughness = 0.5,
         detail = 3
     ) {
-        // IMPORTANT:
-        // detail 20 was catastrophic for performance
-        const geometry =
-            new THREE.IcosahedronGeometry(
-                radius,
-                12
-            );
+        const geometry = new THREE.IcosahedronGeometry(radius, 12);
 
-        const pos =
-            geometry.attributes.position;
+        const pos = geometry.attributes.position;
 
         const vertex = new THREE.Vector3();
 
-        const normal = new THREE.Vector3();
-
+        // random axis stretching
         const stretch = new THREE.Vector3(
             0.7 + Math.random() * 0.8,
             0.7 + Math.random() * 0.8,
             0.7 + Math.random() * 0.8
         );
 
-        for (let i = 0; i < pos.count; i++) {
-            vertex.fromBufferAttribute(
-                pos,
-                i
-            );
+        const normal = new THREE.Vector3();
 
+        for (let i = 0; i < pos.count; i++) {
+            vertex.fromBufferAttribute(pos, i);
+
+            // normalized direction
             normal.copy(vertex).normalize();
 
+            // smooth pseudo-noise
             const noise =
                 Math.sin(normal.x * detail) *
                 Math.sin(normal.y * detail) *
                 Math.sin(normal.z * detail);
 
-            const displacement =
-                1 + noise * roughness;
+            // displacement
+            const displacement = 1 + noise * roughness;
 
-            vertex.copy(
-                normal.multiplyScalar(
-                    radius * displacement
-                )
-            );
+            vertex.copy(normal.multiplyScalar(radius * displacement));
 
+            // re-apply stretch after displacement
             vertex.x *= stretch.x;
             vertex.y *= stretch.y;
             vertex.z *= stretch.z;
 
-            pos.setXYZ(
-                i,
-                vertex.x,
-                vertex.y,
-                vertex.z
-            );
+            pos.setXYZ(i, vertex.x, vertex.y, vertex.z);
         }
 
         geometry.computeVertexNormals();
 
-        return geometry;
+        return new THREE.Mesh(geometry, this.asteroidMaterial);
     }
-
-    // ----------------------------------------
-    // textures
-    // ----------------------------------------
 
     static createAsteroidTexture() {
         const size = 512;
 
-        const canvas =
-            document.createElement("canvas");
-
+        const canvas = document.createElement("canvas");
         canvas.width = size;
         canvas.height = size;
 
-        const ctx =
-            canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d")!;
 
         ctx.fillStyle = "#444";
-
         ctx.fillRect(0, 0, size, size);
 
+        // fine rocky grain
         for (let i = 0; i < 30000; i++) {
             const x = Math.random() * size;
             const y = Math.random() * size;
 
-            const brightness =
-                90 + Math.random() * 40;
+            const brightness = 90 + Math.random() * 40;
 
             ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
 
             ctx.fillRect(x, y, 1, 1);
         }
 
-        return new THREE.CanvasTexture(
-            canvas
-        );
-    }
-
-    static createAsteroidBumpMap() {
-        const size = 512;
-
-        const canvas =
-            document.createElement("canvas");
-
-        canvas.width = size;
-        canvas.height = size;
-
-        const ctx =
-            canvas.getContext("2d")!;
-
-        ctx.fillStyle = "rgb(150,150,150)";
-
-        ctx.fillRect(0, 0, size, size);
-
-        for (let i = 0; i < 120; i++) {
+        // broad soft surface variation
+        for (let i = 0; i < 50; i++) {
             const x = Math.random() * size;
             const y = Math.random() * size;
 
-            const radius =
-                4 + Math.random() * 18;
+            const radius = 30 + Math.random() * 80;
 
-            const gradient =
-                ctx.createRadialGradient(
-                    x,
-                    y,
-                    radius * 0.2,
-                    x,
-                    y,
-                    radius
-                );
+            const shade = 40 + Math.random() * 60;
 
-            gradient.addColorStop(
+            const gradient = ctx.createRadialGradient(
+                x,
+                y,
                 0,
-                "rgba(90,90,90,0.4)"
+                x,
+                y,
+                radius
             );
 
             gradient.addColorStop(
-                0.7,
-                "rgba(140,140,140,0.15)"
+                0,
+                `rgba(${shade}, ${shade}, ${shade}, 0.2)`
             );
 
             gradient.addColorStop(
                 1,
-                "rgba(128,128,128,0)"
+                `rgba(${shade}, ${shade}, ${shade}, 0)`
             );
 
             ctx.fillStyle = gradient;
 
             ctx.beginPath();
-
-            ctx.arc(
-                x,
-                y,
-                radius,
-                0,
-                Math.PI * 2
-            );
-
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        return new THREE.CanvasTexture(
-            canvas
-        );
+        // occasional subtle craters
+        for (let i = 0; i < 120; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+
+            const radius = 4 + Math.random() * 18;
+
+            const gradient = ctx.createRadialGradient(
+                x,
+                y,
+                radius * 0.2,
+                x,
+                y,
+                radius
+            );
+
+            gradient.addColorStop(0, "rgba(90,90,90,0.4)");
+            gradient.addColorStop(0.7, "rgba(140,140,140,0.15)");
+            gradient.addColorStop(1, "rgba(128,128,128,0)");
+
+            ctx.fillStyle = gradient;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        return new THREE.CanvasTexture(canvas);
     }
 
-    // ----------------------------------------
-    // physics
-    // ----------------------------------------
+    static createAsteroidBumpMap() {
+        const size = 512;
 
-    static createAsteroidPhysics(
-        position: {
-            x: number;
-            y: number;
-            z: number;
-        },
-        radius = 1,
-        startingRotation =
-            new THREE.Vector3(),
-        startingDrift =
-            new THREE.Vector3()
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+
+        const ctx = canvas.getContext("2d")!;
+
+        // darker baseline (important: removes flatness)
+        ctx.fillStyle = "rgb(150,150,150)";
+        ctx.fillRect(0, 0, size, size);
+
+        function drawCrater(intensity = 1) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+
+            const radius = 6 + Math.random() * 22;
+
+            const inner = radius * 0.15;
+            const mid = radius * 0.5;
+
+            const g = ctx.createRadialGradient(x, y, inner, x, y, radius);
+
+            // key change: much deeper center + stronger rim
+            const center = 40 - Math.random() * 25; // darker = deeper
+            const rim = 170 + Math.random() * 30;
+
+            g.addColorStop(0, `rgb(${center},${center},${center})`);
+            g.addColorStop(0.4, `rgb(90,90,90)`);
+            g.addColorStop(0.75, `rgb(${rim},${rim},${rim})`);
+            g.addColorStop(1, "rgb(150,150,150)");
+
+            ctx.fillStyle = g;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius * intensity, 0, Math.PI * 2);
+            ctx.fill();
+
+            // SECOND PASS: inner “dent punch”
+            ctx.globalAlpha = 0.35;
+
+            const g2 = ctx.createRadialGradient(x, y, 0, x, y, radius * 0.4);
+
+            g2.addColorStop(0, "rgb(20,20,20)");
+            g2.addColorStop(1, "rgba(0,0,0,0)");
+
+            ctx.fillStyle = g2;
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = 1;
+        }
+
+        // fewer craters, but stronger ones
+        for (let i = 0; i < 180; i++) {
+            drawCrater(1.2);
+        }
+
+        // occasional mega impact craters
+        for (let i = 0; i < 25; i++) {
+            drawCrater(2.0);
+        }
+
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    static createAsteroidPhysics(position: { x: any; y: any; z: any; }, radius = 1,
+        startingRotation = new THREE.Vector3, startingDrift = new THREE.Vector3
     ) {
         const world = getWorld();
 
-        const q = new THREE.Quaternion()
-            .setFromEuler(
-                new THREE.Euler(
-                    Math.random() * Math.PI,
-                    Math.random() * Math.PI,
-                    Math.random() * Math.PI
-                )
-            );
-
-        const bodyDesc =
-            RAPIER.RigidBodyDesc.dynamic()
-                .setTranslation(
-                    position.x,
-                    position.y,
-                    position.z
-                )
-                .setRotation(q)
-                .setLinearDamping(0)
-                .setAngularDamping(0)
-                .setCanSleep(false);
-
-        const body =
-            world.createRigidBody(bodyDesc);
-
-        const speedMultiplier =
-            THREE.MathUtils.lerp(
-                0.9,
-                1.25,
-                Math.random()
-            );
-
-        body.setLinvel(
-            {
-                x:
-                    startingDrift.x *
-                    speedMultiplier,
-                y: 0,
-                z:
-                    startingDrift.z *
-                    speedMultiplier
-            },
-            true
+        const q = new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            )
         );
 
+        // rigid body
+        const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+            .setTranslation(position.x, position.y, position.z)
+            .setRotation(q)
+            .setLinearDamping(0)
+            .setAngularDamping(0)
+            .setCanSleep(false);
+
+        const body = world.createRigidBody(bodyDesc);
+const speedMultiplier =
+  THREE.MathUtils.lerp(0.9, 1.25, Math.random());
+
+body.setLinvel(
+  {
+    x: startingDrift.x * speedMultiplier,
+    y: 0,
+    z: startingDrift.z * speedMultiplier
+  },
+  true
+);
         body.setAngvel(
-            {
-                x: startingRotation.x,
-                y: startingRotation.y,
-                z: startingRotation.z
-            },
+            { x: startingRotation.x, y: startingRotation.y, z: startingRotation.z },
             false
         );
 
-        const colliderDesc =
-            RAPIER.ColliderDesc.ball(radius)
-                .setMass(5 * radius)
-                .setActiveEvents(
-                    RAPIER.ActiveEvents
-                        .COLLISION_EVENTS
-                );
+        body.wakeUp();
 
-        world.createCollider(
-            colliderDesc,
-            body
-        );
+        // collider (sphere is best for asteroids)
+        const colliderDesc = RAPIER.ColliderDesc
+            .ball(radius)
+            .setMass(5 * radius)
+            .setActiveEvents(
+                RAPIER.ActiveEvents.COLLISION_EVENTS
+            );
+
+        world.createCollider(colliderDesc, body);
 
         return body;
     }
@@ -523,10 +342,10 @@ export class AsteroidGenerator {
 function sampleAsteroidY() {
     const bands = [-8, 0, 8];
 
+    // middle lane more common
     const weights = [1, 5, 1];
 
-    const totalWeight =
-        weights.reduce((a, b) => a + b, 0);
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
 
     let r = Math.random() * totalWeight;
 
@@ -538,5 +357,7 @@ function sampleAsteroidY() {
         }
     }
 
+    // fallback (should never happen)
     return 0;
 }
+

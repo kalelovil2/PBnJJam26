@@ -61,7 +61,7 @@ export class CheckpointGenerator {
         if (valid) {
           for (const asteroid of asteroids) {
             if (
-              asteroid.position.distanceTo(position) <
+              asteroid.mesh.position.distanceTo(position) <
               CHECKPOINT_CLEARANCE
             ) {
               valid = false;

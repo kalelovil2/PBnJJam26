@@ -57,7 +57,7 @@ export class CargoGenerator {
         if (valid) {
           for (const asteroid of asteroids) {
             if (
-              asteroid.position.distanceTo(
+              asteroid.mesh.position.distanceTo(
                 position
               ) < ASTEROID_CLEARANCE
             ) {
