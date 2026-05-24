@@ -1,14 +1,13 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d";
 import { Checkpoint } from "./Checkpoint";
-import type { Asteroid } from "../SpaceObjects/Asteroid";
 import { ASTEROID_SAFE_RADIUS, CHECKPOINT_CLEARANCE, CHECKPOINT_COUNT, LEVEL_SIZE, PLAYER_START } from "../../GameConfig";
 
 export class CheckpointGenerator {
   static async spawnCheckpoints(
     scene: THREE.Scene,
     world: RAPIER.World,
-    asteroids: Asteroid[]
+    asteroids:  { position: THREE.Vector3 }[]
   ): Promise<Checkpoint[]> {
     const checkpoints: Checkpoint[] = [];
 

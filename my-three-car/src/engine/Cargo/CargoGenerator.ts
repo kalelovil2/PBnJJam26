@@ -1,14 +1,13 @@
 import * as THREE from "three";
 
 import { Cargo, CargoType } from "./Cargo";
-import { Asteroid } from "../SpaceObjects/Asteroid";
 import { Checkpoint } from "../Checkpoints/Checkpoint";
 import { ASTEROID_CLEARANCE, CARGO_CLEARANCE, CARGO_COUNT, CHECKPOINT_CLEARANCE, LEVEL_SIZE, PLAYER_CLEARANCE, PLAYER_START } from "../../GameConfig";
 
 export class CargoGenerator {
   static spawnCargo(
     scene: THREE.Scene,
-    asteroids: Asteroid[],
+    asteroids: { position: THREE.Vector3 }[],
     checkpoints: Checkpoint[],
   ): Cargo[] {
     const cargoList: Cargo[] = [];
