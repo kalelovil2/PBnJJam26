@@ -17,12 +17,12 @@ export type CargoType =
 const textureLoader = new THREE.TextureLoader();
 
 const safeDecalTexture =
-  textureLoader.load("/textures/SafeCargo_Feijoas_v01.png");
+  textureLoader.load("./SafeCargo_Feijoas_v01.png");
 
 const contrabandDecalTexture =
-  textureLoader.load("/textures/BannedCargo_CoffeeBeans_v02.png");
+  textureLoader.load("./BannedCargo_CoffeeBeans_v02.png");
 
-const DECAL_OFFSET = 0.05;
+const DECAL_OFFSET = 0.01;
 
 
 export class Cargo {
@@ -128,8 +128,8 @@ export class Cargo {
     );
 
     (this.body as any).userData = {
-  type: "cargo"
-};
+      type: "cargo"
+    };
 
     const colliderDesc = RAPIER.ColliderDesc
       .cuboid(0.5, 0.5, 1)
@@ -163,46 +163,20 @@ export class Cargo {
       side: THREE.DoubleSide
     });
 
-    const decalGeometry = new THREE.PlaneGeometry(0.7, 0.7);
+    const decalGeometry = new THREE.PlaneGeometry(1, 1);
 
-    const frontDecal = new THREE.Mesh(
+    // -------------------------
+    // TOP DECAL (+Y face)
+    // -------------------------
+    const topDecal = new THREE.Mesh(
       decalGeometry,
       decalMaterial
     );
 
-    frontDecal.position.set(0, 0, -(0.8 + DECAL_OFFSET));
+    topDecal.position.set(0, 0.6 + DECAL_OFFSET, 0);
+    topDecal.rotation.x = -Math.PI / 2;
 
-    this.mesh.add(frontDecal);
-
-    const backDecal = new THREE.Mesh(
-      decalGeometry,
-      decalMaterial
-    );
-
-    backDecal.position.set(0, 0, (0.8 + DECAL_OFFSET));
-    backDecal.rotation.y = Math.PI;
-
-    this.mesh.add(backDecal);
-
-    const leftDecal = new THREE.Mesh(
-      decalGeometry,
-      decalMaterial
-    );
-
-    leftDecal.position.set(-0.46, 0, 0);
-    leftDecal.rotation.y = -Math.PI / 2;
-
-    this.mesh.add(leftDecal);
-
-    const rightDecal = new THREE.Mesh(
-      decalGeometry,
-      decalMaterial
-    );
-
-    rightDecal.position.set(0.46, 0, 0);
-    rightDecal.rotation.y = Math.PI / 2;
-
-    this.mesh.add(rightDecal);
+    this.mesh.add(topDecal);
 
     scene.add(this.mesh);
 
