@@ -26,9 +26,9 @@ export class AsteroidGenerator {
         new THREE.MeshStandardMaterial({
             map: AsteroidGenerator.asteroidTexture,
             bumpMap: AsteroidGenerator.asteroidBump,
-            bumpScale: 1.25,
+            bumpScale: 2.5,
             flatShading: true,
-            roughness: 1
+            roughness: 1,
         });
 
     // ----------------------------
@@ -318,6 +318,68 @@ export class AsteroidGenerator {
 
             ctx.fillStyle = `rgb(${b},${b},${b})`;
             ctx.fillRect(x, y, 1, 1);
+        }
+
+                // broad soft surface variation
+        for (let i = 0; i < 50; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+
+            const radius = 30 + Math.random() * 80;
+
+            const shade = 40 + Math.random() * 60;
+
+            const gradient = ctx.createRadialGradient(
+                x,
+                y,
+                0,
+                x,
+                y,
+                radius
+            );
+
+            gradient.addColorStop(
+                0,
+                `rgba(${shade}, ${shade}, ${shade}, 0.2)`
+            );
+
+            gradient.addColorStop(
+                1,
+                `rgba(${shade}, ${shade}, ${shade}, 0)`
+            );
+
+            ctx.fillStyle = gradient;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // occasional subtle craters
+        for (let i = 0; i < 120; i++) {
+            const x = Math.random() * size;
+            const y = Math.random() * size;
+
+            const radius = 4 + Math.random() * 18;
+
+            const gradient = ctx.createRadialGradient(
+                x,
+                y,
+                radius * 0.2,
+                x,
+                y,
+                radius
+            );
+
+            gradient.addColorStop(0, "rgba(90,90,90,0.4)");
+            gradient.addColorStop(0.7, "rgba(140,140,140,0.15)");
+            gradient.addColorStop(1, "rgba(128,128,128,0)");
+
+            ctx.fillStyle = gradient;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         return new THREE.CanvasTexture(canvas);
