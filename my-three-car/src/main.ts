@@ -446,10 +446,23 @@ function animate() {
   // DEBUG
   //
 
-  debugOverlay.update(
-    ship.mesh,
-    ship.visual
-  );
+const vel = ship.body.linvel();
+const angVel = ship.body.angvel();
+
+debugOverlay.update(
+  ship.mesh,
+  ship.visual,
+  new THREE.Vector3(
+    vel.x,
+    vel.y,
+    vel.z
+  ),
+  new THREE.Vector3(
+    angVel.x,
+    angVel.y,
+    angVel.z
+  )
+);
 
   for (const cargo of levelCargo) {
     cargo.updateDebugLabel(camera);

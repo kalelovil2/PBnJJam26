@@ -74,8 +74,8 @@ export class Ship {
     this.body = world.createRigidBody(bodyDesc);
 
     (this.body as any).userData = {
-  type: "ship"
-};
+      type: "ship"
+    };
 
     const collider = RAPIER.ColliderDesc
       .cuboid(0.5, 0.25, 1)
@@ -377,6 +377,67 @@ export class Ship {
 
       return alive;
     });
+
+    this.correctTilt();
+  }
+
+  correctTilt() {
+    const pos = this.body.translation();
+    const rot = this.body.rotation();
+
+    //
+    // LOCK TO Y PLANE
+    //
+    this.body.setTranslation(
+      {
+        x: pos.x,
+        y: 0,
+        z: pos.z
+      },
+      true
+    );
+
+    //
+    // UPRIGHT STABILIZATION
+    //
+    const q = new THREE.Quaternion(
+      rot.x,
+      rot.y,
+      rot.z,
+      rot.w
+    );
+
+    const euler = new THREE.Euler().setFromQuaternion(
+      q,
+      "YXZ"
+    );
+
+    //
+    // keep yaw only
+    //
+    const uprightQuat =
+      new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(
+          0,
+          euler.y,
+          0
+        )
+      );
+
+    //
+    // smoothly correct tilt
+    //
+    q.slerp(uprightQuat, 0.08);
+
+    this.body.setRotation(
+      {
+        x: q.x,
+        y: q.y,
+        z: q.z,
+        w: q.w
+      },
+      true
+    );
   }
 
   updateCamera(camera: THREE.Camera) {

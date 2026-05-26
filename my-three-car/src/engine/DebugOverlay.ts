@@ -31,7 +31,13 @@ export class DebugOverlay {
     document.body.appendChild(this.element);
   }
 
-  update(ship: THREE.Object3D, visual: THREE.Object3D) {
+update(
+  ship: THREE.Object3D,
+  visual: THREE.Object3D,
+  velocity: THREE.Vector3,
+  angularVelocity: THREE.Vector3
+)
+{
     if (!DEBUG) return;
 
     // FPS
@@ -71,6 +77,35 @@ export class DebugOverlay {
     // Position
     const pos = ship.position;
 
+    //
+// VELOCITY
+//
+const speed =
+  velocity.length();
+
+const forward = new THREE.Vector3(0, 0, -1)
+  .applyQuaternion(ship.quaternion)
+  .normalize();
+
+const forwardSpeed =
+  velocity.dot(forward);
+
+const horizontalVelocity =
+  new THREE.Vector3(
+    velocity.x,
+    0,
+    velocity.z
+  );
+
+const horizontalSpeed =
+  horizontalVelocity.length();
+
+  //
+// ANGULAR VELOCITY
+//
+const torque =
+  angularVelocity.length();
+
     // Rotation
     const rot = new THREE.Euler().setFromQuaternion(
       ship.quaternion,
@@ -104,6 +139,12 @@ export class DebugOverlay {
 x: ${pos.x.toFixed(2)}
 y: ${pos.y.toFixed(2)}
 z: ${pos.z.toFixed(2)}
+
+SHIP VELOCITY
+speed: ${speed.toFixed(2)}
+forward: ${forwardSpeed.toFixed(2)}
+horizontal: ${horizontalSpeed.toFixed(2)}
+torque: ${torque.toFixed(2)}
 
 SHIP ROTATION
 x: ${(Math.abs(THREE.MathUtils.radToDeg(rot.x)) < 0.05 ? 0 : THREE.MathUtils.radToDeg(rot.x)).toFixed(1)}

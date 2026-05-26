@@ -393,7 +393,7 @@ export class Cargo {
     // anchor points in local space
     const parentAnchor = isShip
       ? { x: 0, y: 0, z: 1.4 } // farther behind ship
-      : { x: 0, y: 0, z: 1.1 };
+      : { x: 0, y: 0, z: 1.25 };
     const childAnchor = { x: 0, y: 0, z: -1.1 }; // FRONT of cargo
 
     const jointData = RAPIER.JointData.spring(
