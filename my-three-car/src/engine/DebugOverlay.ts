@@ -35,7 +35,9 @@ update(
   ship: THREE.Object3D,
   visual: THREE.Object3D,
   velocity: THREE.Vector3,
-  angularVelocity: THREE.Vector3
+  angularVelocity: THREE.Vector3,
+  asteroids: any[],
+  comets: any[]
 )
 {
     if (!DEBUG) return;
@@ -134,6 +136,18 @@ const torque =
         `${used.toFixed(1)} MB / ${total.toFixed(1)} MB`;
     }
 
+    const aliveAsteroids =
+  asteroids.filter(a => a?.alive !== false);
+
+const aliveComets =
+  comets.filter(c => c?.alive !== false);
+
+const asteroidAvgVel =
+  this.avgVelocity(aliveAsteroids);
+
+const cometAvgVel =
+  this.avgVelocity(aliveComets);
+
     this.element.textContent =
 `SHIP POSITION
 x: ${pos.x.toFixed(2)}
@@ -156,6 +170,14 @@ x: ${(Math.abs(THREE.MathUtils.radToDeg(visualRot.x)) < 0.05 ? 0 : THREE.MathUti
 y: ${(Math.abs(THREE.MathUtils.radToDeg(visualRot.y)) < 0.05 ? 0 : THREE.MathUtils.radToDeg(visualRot.y)).toFixed(1)}
 z: ${(Math.abs(THREE.MathUtils.radToDeg(visualRot.z)) < 0.05 ? 0 : THREE.MathUtils.radToDeg(visualRot.z)).toFixed(1)}
 
+ASTEROIDS
+count: ${aliveAsteroids.length}
+avg vel: (${asteroidAvgVel.x.toFixed(2)}, ${asteroidAvgVel.y.toFixed(2)}, ${asteroidAvgVel.z.toFixed(2)})
+
+COMETS
+count: ${aliveComets.length}
+avg vel: (${cometAvgVel.x.toFixed(2)}, ${cometAvgVel.y.toFixed(2)}, ${cometAvgVel.z.toFixed(2)})
+
 GAME TIME
 ${gameTime}
 
@@ -168,4 +190,28 @@ ${(1000 / this.fps).toFixed(2)} ms
 MEMORY:
 ${memoryText}`;
   }
+
+  private avgVelocity(objects: any[]): THREE.Vector3 {
+  const v = new THREE.Vector3();
+  let count = 0;
+
+  for (const obj of objects) {
+    if (obj?.alive === false) continue;
+    if (!obj.body?.linvel) continue;
+
+    const vel = obj.body.linvel();
+
+    v.x += vel.x;
+    v.y += vel.y;
+    v.z += vel.z;
+
+    count++;
+  }
+
+  if (count === 0) return v;
+
+  v.divideScalar(count);
+
+  return v;
+}
 }

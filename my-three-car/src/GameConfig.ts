@@ -5,7 +5,7 @@ export const LEVEL_SIZE = 100;
 export const ASTEROID_SAFE_RADIUS = 15;
 
 export const ASTEROID_COUNT = 280;
-export const COMET_COUNT = 20;
+export const COMET_COUNT = 80;
 
 export const CHECKPOINT_COUNT = 10;
 

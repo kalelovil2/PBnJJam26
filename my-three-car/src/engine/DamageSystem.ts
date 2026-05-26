@@ -6,6 +6,8 @@ import type { Cargo } from "./Cargo/Cargo";
 export class DamageSystem {
   cargoLookup = new Map<number, Cargo>();
 
+  private cometKillQueue: Comet[] = [];
+
   onImpact?: (
     position: THREE.Vector3,
     normal: THREE.Vector3,
@@ -14,6 +16,14 @@ export class DamageSystem {
 
   registerCargo(cargo: Cargo) {
     this.cargoLookup.set(cargo.body.handle, cargo);
+  }
+
+  flushCometKills() {
+    for (const comet of this.cometKillQueue) {
+      comet.destroy(); // safe NOW, outside physics callback
+    }
+
+    this.cometKillQueue.length = 0;
   }
 
   update() {
@@ -28,6 +38,9 @@ export class DamageSystem {
       const b1 = c1.parent();
       const b2 = c2.parent();
 
+      const o1 = (b1 as any).userData;
+      const o2 = (b2 as any).userData;
+
       const type1 =
         (b1 as any).userData?.type;
 
@@ -35,6 +48,18 @@ export class DamageSystem {
         (b2 as any).userData?.type;
 
       if (!b1 || !b2) return;
+
+      if (o1?.type === "comet") {
+        o1.ref.markForDestruction();
+        this.cometKillQueue.push(o1.ref);
+        console.log("DESTROY COMET");
+      }
+
+      if (o2?.type === "comet") {
+        o2.ref.markForDestruction();
+        this.cometKillQueue.push(o2.ref);
+        console.log("DESTROY COMET");
+      }
 
       const v1 = b1.linvel();
       const v2 = b2.linvel();
@@ -104,17 +129,6 @@ export class DamageSystem {
           normal,
           damage
         );
-      }
-
-      const o1 = b1.userData;
-      const o2 = b2.userData;
-
-      if (o1 instanceof Comet) {
-        o1.destroy();
-      }
-
-      if (o2 instanceof Comet) {
-        o2.destroy();
       }
     });
   }

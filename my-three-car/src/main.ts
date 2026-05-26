@@ -17,7 +17,7 @@ import {
 import { CargoGenerator } from "./engine/Cargo/CargoGenerator.ts";
 import { PhysicsDebug } from "./engine/PhysicsDebug.ts";
 import { DamageSystem } from "./engine/DamageSystem.ts";
-  import { ShipHeadlightSystem } from "./engine/Ship/ShipHeadlightSystem.ts";
+import { ShipHeadlightSystem } from "./engine/Ship/ShipHeadlightSystem.ts";
 import { ASTEROID_COUNT, CARGO_COUNT, CHECKPOINT_COUNT, COMET_COUNT, LEVEL_SIZE, PLAYER_START } from "./GameConfig.ts";
 import { Ship } from "./engine/Ship/Ship.ts";
 import { CheckpointGenerator } from "./engine/Checkpoints/CheckpointGenerator.ts";
@@ -162,7 +162,7 @@ const asteroids =
     scene,
   );
 
-  const cometField = new CometField(scene, COMET_COUNT);
+const cometField = new CometField(scene, COMET_COUNT);
 //
 // CHECKPOINTS
 //
@@ -442,27 +442,31 @@ function animate() {
 
   cometField.update(ship.mesh.position);
 
+  damageSystem.flushCometKills();
+
   //
   // DEBUG
   //
 
-const vel = ship.body.linvel();
-const angVel = ship.body.angvel();
+  const vel = ship.body.linvel();
+  const angVel = ship.body.angvel();
 
-debugOverlay.update(
-  ship.mesh,
-  ship.visual,
-  new THREE.Vector3(
-    vel.x,
-    vel.y,
-    vel.z
-  ),
-  new THREE.Vector3(
-    angVel.x,
-    angVel.y,
-    angVel.z
-  )
-);
+  debugOverlay.update(
+    ship.mesh,
+    ship.visual,
+    new THREE.Vector3(
+      vel.x,
+      vel.y,
+      vel.z
+    ),
+    new THREE.Vector3(
+      angVel.x,
+      angVel.y,
+      angVel.z
+    ),
+    asteroids,
+    cometField.comets
+  );
 
   for (const cargo of levelCargo) {
     cargo.updateDebugLabel(camera);

@@ -17,7 +17,7 @@ export class ImpactParticleSystem {
     strength: number
   ) {
 
-      console.log("Impact Particles");
+    //console.log("Impact Particles");
 
     const count =
       Math.min(

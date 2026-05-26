@@ -4,6 +4,7 @@ import { getWorld } from "../../physics";
 
 export class Comet {
     mesh: THREE.Mesh;
+    scene: THREE.Scene;
 
     body: RAPIER.RigidBody;
     collider: RAPIER.Collider;
@@ -57,17 +58,19 @@ export class Comet {
 
         this.trailGlowGeo = new THREE.BufferGeometry();
         this.trailGlowMat = new THREE.MeshBasicMaterial({
-        color: 0x88ccff,
-        transparent: true,
-        opacity: 0.6,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
+            color: 0x88ccff,
+            transparent: true,
+            opacity: 0.6,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
         });
 
         this.trailGlowMesh = new THREE.Mesh(this.trailGlowGeo, this.trailGlowMat);
         scene.add(this.trailGlowMesh);
 
         scene.add(this.mesh);
+
+        this.scene = scene;
 
         //
         // PHYSICS BODY
@@ -84,6 +87,11 @@ export class Comet {
         this.body =
             world.createRigidBody(bodyDesc);
 
+        this.body.userData = {
+            type: "comet",
+            ref: this
+        } as any;
+
         const colliderDesc =
             RAPIER.ColliderDesc.ball(radius)
                 .setMass(0.05);
@@ -96,9 +104,10 @@ export class Comet {
 
         this.collider.setRestitution(0.05);
         this.collider.setFriction(0.0);
+
     }
 
-    spawn(center: THREE.Vector3) {
+    spawn(position: THREE.Vector3, direction: THREE.Vector3) {
         //
         // SPAWN FAR FROM PLAYER
         //
@@ -119,23 +128,12 @@ export class Comet {
 
         tangent.normalize();
 
-        const speed = this.rand(4.5, 5.0);
-
-        this.body.setLinvel(
-            {
-                x: tangent.x * speed,
-                y: 0,
-                z: tangent.z * speed
-            },
-            true
-        );
-
-        this.lockedY = center.y;
+        this.lockedY = position.y;
 
         const spawnPos = new THREE.Vector3(
-            center.x + Math.cos(angle) * 120,
-            center.y,
-            center.z + Math.sin(angle) * 120
+            position.x + Math.cos(angle) * 120,
+            position.y,
+            position.z + Math.sin(angle) * 120
         );
 
         this.body.setTranslation(
@@ -147,22 +145,13 @@ export class Comet {
             true
         );
 
-        //
-        // FAST CROSSING DIRECTION
-        //
-        const dir = new THREE.Vector3(
-            -Math.cos(angle),
-            0,
-            -Math.sin(angle)
-        ).normalize();
-
-        dir.multiplyScalar(speed);
+        const speed = this.rand(3.0, 4.5);
 
         this.body.setLinvel(
             {
-                x: dir.x,
-                y: dir.y,
-                z: dir.z
+                x: direction.x * speed,
+                y: 0,
+                z: direction.z * speed
             },
             true
         );
@@ -180,18 +169,32 @@ export class Comet {
         );
     }
 
+    markForDestruction() {
+        this.alive = false;
+    }
+
     destroy() {
-  if (!this.alive) return;
+        if (!this.mesh) return;
 
-  this.alive = false;
+        const world = getWorld();
 
-  const world = getWorld();
+        world.removeCollider(this.collider, true);
+        world.removeRigidBody(this.body);
 
-  world.removeRigidBody(this.body);
+        this.trailGeo.dispose();
+        (this.trailMat as THREE.Material).dispose();
 
-  this.mesh.removeFromParent();
-  this.trailMesh.removeFromParent();
-}
+        (this.mesh.material as THREE.Material).dispose();
+        this.mesh.geometry.dispose();
+
+        this.scene.remove(this.mesh);
+        this.scene.remove(this.trailMesh);
+
+        // prevent repeated disposal
+        this.mesh = null as any;
+
+        console.log("REMOVING COMET:", this);
+    }
 
     update() {
         //
@@ -229,73 +232,73 @@ export class Comet {
             rot.w
         );
 
-        console.log("trail size:", this.trail.length);
+        //console.log("trail size:", this.trail.length);
 
         this.updateTrailMesh();
 
-        console.log("comet pos:", pos.x, pos.y, pos.z);
+        //console.log("comet pos:", pos.x, pos.y, pos.z);
     }
 
-private updateTrailMesh() {
-  if (this.trail.length < 2) return;
+    private updateTrailMesh() {
+        if (this.trail.length < 2) return;
 
-  const core: number[] = [];
-  const glow: number[] = [];
+        const core: number[] = [];
+        const glow: number[] = [];
 
-  for (let i = 0; i < this.trail.length - 1; i++) {
-    const a = this.trail[i];
-    const b = this.trail[i + 1];
+        for (let i = 0; i < this.trail.length - 1; i++) {
+            const a = this.trail[i];
+            const b = this.trail[i + 1];
 
-    const t = i / this.trail.length;
+            const t = i / this.trail.length;
 
-    const coreWidth = (1 - t) * 0.08;
-    const glowWidth = (1 - t) * 0.18;
+            const coreWidth = (1 - t) * 0.08;
+            const glowWidth = (1 - t) * 0.18;
 
-    this.buildStrip(core, a, b, coreWidth);
-    this.buildStrip(glow, a, b, glowWidth);
-  }
+            this.buildStrip(core, a, b, coreWidth);
+            this.buildStrip(glow, a, b, glowWidth);
+        }
 
-  this.trailGeo.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(core, 3)
-  );
-  this.trailGeo.computeBoundingSphere();
+        this.trailGeo.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(core, 3)
+        );
+        this.trailGeo.computeBoundingSphere();
 
-  this.trailGlowGeo.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(glow, 3)
-  );
-  this.trailGlowGeo.computeBoundingSphere();
-}
+        this.trailGlowGeo.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(glow, 3)
+        );
+        this.trailGlowGeo.computeBoundingSphere();
+    }
 
     private rand(min: number, max: number) {
         return min + Math.random() * (max - min);
     }
 
     private buildStrip(
-  positions: number[],
-  a: THREE.Vector3,
-  b: THREE.Vector3,
-  width: number
-) {
-  const dir = new THREE.Vector3()
-    .subVectors(b, a)
-    .normalize();
+        positions: number[],
+        a: THREE.Vector3,
+        b: THREE.Vector3,
+        width: number
+    ) {
+        const dir = new THREE.Vector3()
+            .subVectors(b, a)
+            .normalize();
 
-  const side = new THREE.Vector3(
-    -dir.z,
-    0,
-    dir.x
-  ).multiplyScalar(width);
+        const side = new THREE.Vector3(
+            -dir.z,
+            0,
+            dir.x
+        ).multiplyScalar(width);
 
-  positions.push(
-    a.x + side.x, a.y, a.z + side.z,
-    a.x - side.x, a.y, a.z - side.z,
-    b.x + side.x, b.y, b.z + side.z,
+        positions.push(
+            a.x + side.x, a.y, a.z + side.z,
+            a.x - side.x, a.y, a.z - side.z,
+            b.x + side.x, b.y, b.z + side.z,
 
-    b.x + side.x, b.y, b.z + side.z,
-    a.x - side.x, a.y, a.z - side.z,
-    b.x - side.x, b.y, b.z - side.z
-  );
-}
+            b.x + side.x, b.y, b.z + side.z,
+            a.x - side.x, a.y, a.z - side.z,
+            b.x - side.x, b.y, b.z - side.z
+        );
+    }
 }
