@@ -22,6 +22,7 @@ import { ASTEROID_COUNT, CARGO_COUNT, CHECKPOINT_COUNT, COMET_COUNT, LEVEL_SIZE,
 import { Ship } from "./engine/Ship/Ship.ts";
 import { CheckpointGenerator } from "./engine/Checkpoints/CheckpointGenerator.ts";
 import { AsteroidGenerator } from "./engine/SpaceObjects/AsteroidGenerator.ts";
+import { SellZone } from "./engine/SellZone";
 
 const startMenu = new StartMenu();
 
@@ -152,6 +153,19 @@ damageSystem.onImpact = (
     strength
   );
 };
+
+//
+// SELL ZONES
+//
+
+const sellZones: SellZone[] = [];
+
+sellZones.push(
+  new SellZone(scene, new THREE.Vector3(4, 0, 5), CargoType.SAFE)
+);
+sellZones.push(
+  new SellZone(scene, new THREE.Vector3(-80, 0, 0), CargoType.CONTRABAND)
+);
 
 //
 // ASTEROIDS
@@ -433,6 +447,22 @@ function animate() {
   impactParticles.update(1 / 60);
 
   //
+  // SELL ZONES
+  //
+
+  for (const zone of sellZones) {
+    const dx = ship.mesh.position.x - zone.position.x;
+    const dy = ship.mesh.position.y - zone.position.y;
+    const dz = ship.mesh.position.z - zone.position.z;
+
+    const distSq = dx * dx + dy * dy + dz * dz;
+
+    if (distSq < zone.radius * zone.radius) {
+      processCargoSale(zone, cargoChain);
+    }
+  }
+
+  //
   // ASTEROIDS
   //
 
@@ -486,6 +516,34 @@ function animate() {
 }
 
 animate();
+
+function processCargoSale(zone: SellZone, cargoChain: Cargo[]) {
+  let total = 0;
+
+  console.log("Process Sale")
+
+  for (const cargo of cargoChain) {
+    if (!cargo.attached) continue;
+
+    const isContraband = cargo.type === CargoType.CONTRABAND;
+
+    if (zone.type === CargoType.SAFE && isContraband) {
+      continue; // illegal, no sale
+    }
+
+    if (zone.type === CargoType.CONTRABAND && isContraband) {
+      total += 50; // bonus payout
+    } else {
+      total += 10;
+    }
+
+    cargo.health.applyDamage(9999); // destroy cargo
+  }
+
+  if (total > 0) {
+    console.log("SOLD CARGO: +", total);
+  }
+}
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "h") {

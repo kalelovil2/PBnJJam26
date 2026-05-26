@@ -51,13 +51,11 @@ export class DamageSystem {
 
       if (o1?.type === "comet") {
         o1.ref.markForDestruction();
-        this.cometKillQueue.push(o1.ref);
         console.log("DESTROY COMET");
       }
 
       if (o2?.type === "comet") {
         o2.ref.markForDestruction();
-        this.cometKillQueue.push(o2.ref);
         console.log("DESTROY COMET");
       }
 
