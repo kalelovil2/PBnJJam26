@@ -193,7 +193,7 @@ export class Comet {
         // prevent repeated disposal
         this.mesh = null as any;
 
-        console.log("REMOVING COMET:", this);
+        //console.log("REMOVING COMET:", this);
     }
 
     update() {

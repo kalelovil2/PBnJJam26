@@ -9,6 +9,9 @@ import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";;
 import { CometField } from "./engine/SpaceObjects/CometField.ts";
 
+import { ScannerField }
+from "./engine/Scanners/ScannerField.ts";
+
 import {
   Cargo,
   CargoType
@@ -187,6 +190,9 @@ const checkpoints =
     getWorld(),
     asteroids
   );
+
+  const scannerField =
+  new ScannerField(scene);
 
 //
 // RANDOM CARGO
@@ -473,6 +479,22 @@ function animate() {
   cometField.update(ship.mesh.position);
 
   damageSystem.flushCometKills();
+
+//
+  // SCANNERS
+  scannerField.update(1 / 60);
+
+  if (
+  scannerField.checkContrabandDetection(
+    ship.mesh.position,
+    cargoChain
+  )
+) {
+  console.log(
+    "CONTRABAND DETECTED"
+  );
+}
+
 
   //
   // DEBUG
