@@ -9,6 +9,8 @@ import { getWorld, initPhysics, stepPhysics } from "./physics";
 import { DebugOverlay } from "./engine/DebugOverlay";;
 import { CometField } from "./engine/SpaceObjects/CometField.ts";
 
+import { PlayerInput } from "./PlayerInput";
+
 import { ScannerField }
 from "./engine/Scanners/ScannerField.ts";
 
@@ -35,6 +37,8 @@ await startMenu.show();
 const scene = new THREE.Scene();
 
 await initPhysics();
+
+const playerInput = new PlayerInput();
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -411,7 +415,9 @@ function animate() {
   // PLAYER INPUT
   //
 
-  ship.updateControls();
+  
+    playerInput.update(camera, ship);
+  ship.updateControls(playerInput);
 
   //
   // PICKUPS

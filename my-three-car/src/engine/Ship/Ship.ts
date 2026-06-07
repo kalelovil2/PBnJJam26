@@ -3,6 +3,9 @@ import RAPIER from "@dimforge/rapier3d";
 import { ThrusterParticle } from "./ThrusterParticle";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { getWorld } from "../../physics";
+import { PlayerInput } from "../../PlayerInput";
+
+const INPUT_X_RIGHT = -1;
 
 export class Ship {
   static FORWARD_Z = -1;
@@ -162,7 +165,7 @@ export class Ship {
     this.mesh.add(this.rightRear);
   }
 
-  updateControls() {
+  updateControls(playerInput: PlayerInput) {
     if (!this.initialized) return;
 
     const reset = (m: THREE.Mesh) => {
@@ -199,37 +202,44 @@ export class Ship {
     // THRUST (W/S)
     // -------------------------
 
-    if (this.keys["w"]) {
-      this.body.applyImpulse(
-        {
-          x: forward.x * thrust,
-          y: 0,
-          z: forward.z * thrust
-        },
-        false
-      );
+// keyboard input
+const keyboardThrottle =
+  (this.keys["w"] ? 1 : 0) +
+  (this.keys["s"] ? -1 : 0);
 
-      (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
-      (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+// mouse/touch input
+const mouseThrottle = playerInput.throttle ?? 0;
 
-      this.spawnThrusterParticles(this.mainForwardLeft, 4, 0.1);
-      this.spawnThrusterParticles(this.mainForwardRight, 4, 0.1);
-    }
+// IMPORTANT: do NOT stack — choose dominant input
+    const throttle = Math.abs(mouseThrottle) > 0.05 && playerInput.mouseDown
+  ? mouseThrottle
+  : keyboardThrottle;
 
-    if (this.keys["s"]) {
-      this.body.applyImpulse(
-        {
-          x: -forward.x * thrust,
-          y: 0,
-          z: -forward.z * thrust
-        },
-        false
-      );
 
-      (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+// APPLY FORWARD / REVERSE
+if (throttle !== 0) {
+  this.body.applyImpulse(
+    {
+      x: forward.x * thrust * throttle,
+      y: 0,
+      z: forward.z * thrust * throttle
+    },
+    false
+  );
+}
 
-      this.spawnThrusterParticles(this.mainReverse, 2, 0.06);
-    }
+if (throttle > 0) {
+  (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+  (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+
+  this.spawnThrusterParticles(this.mainForwardLeft, 4, 0.1);
+  this.spawnThrusterParticles(this.mainForwardRight, 4, 0.1);
+}
+
+if (throttle < 0) {
+  (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+  this.spawnThrusterParticles(this.mainReverse, 2, 0.06);
+}
 
     // -------------------------
     // STRAFE (Q/E)
@@ -269,44 +279,34 @@ export class Ship {
       this.spawnThrusterParticles(this.leftRear, 2, 0.05);
     }
 
-    // -------------------------
-    // TURNING (A/D)
-    // -------------------------
+    const keyboardIntent = new THREE.Vector2(
+      (this.keys["d"] ? 1 : 0) - (this.keys["a"] ? 1 : 0),
+      0
+    );
 
-    if (this.keys["a"]) {
-      this.body.applyTorqueImpulse(
-        {
-          x: 0,
-          y: turnTorque,
-          z: 0
-        },
-        false
-      );
+    const keyboardWeight = 0.8;
+    const mouseWeight = playerInput.mouseDown ? 1.2 : 0.0;
 
-      (this.rightFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-      (this.leftRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+    const combined = new THREE.Vector2();
 
-      this.spawnThrusterParticles(this.rightFront, 2, 0.05);
-      this.spawnThrusterParticles(this.leftRear, 2, 0.05);
-    }
+    combined
+      .addScaledVector(keyboardIntent, keyboardWeight)
+      .addScaledVector(playerInput.steering, mouseWeight);
 
-    if (this.keys["d"]) {
-      this.body.applyTorqueImpulse(
-        {
-          x: 0,
-          y: -turnTorque,
-          z: 0
-        },
-        false
-      );
+    // if (combined.lengthSq() > 0) {
+    //   combined.normalize();
+    // }
 
-      (this.leftFront.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-      (this.rightRear.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-
-      this.spawnThrusterParticles(this.leftFront, 2, 0.05);
-      this.spawnThrusterParticles(this.rightRear, 2, 0.05);
-    }
+    this.body.applyTorqueImpulse(
+      {
+        x: 0,
+        y: -combined.x * turnTorque,
+        z: 0
+      },
+      false
+    );
   }
+
 
   syncFromPhysics() {
     if (!this.initialized) return;
@@ -541,7 +541,3 @@ async function loadModel(scene: THREE.Scene<THREE.Object3DEventMap>, mesh: THREE
     mesh.add(model);
   });
 }
-
-const CONE_FORWARD_FIX = new THREE.Quaternion().setFromEuler(
-  new THREE.Euler(Math.PI / 2, 0, 0)
-);
