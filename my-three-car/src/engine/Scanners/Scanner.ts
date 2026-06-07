@@ -11,7 +11,11 @@ export class Scanner {
   beamWidth = 2;
 
   rotation = 0;
-  rotationSpeed = 0.35;
+  rotationSpeed = 0.25;
+
+  private alertTimer = 0;
+
+  private beamMat: THREE.MeshBasicMaterial;
 
   constructor(
     scene: THREE.Scene,
@@ -51,14 +55,13 @@ export class Scanner {
         0.5,
         this.radius
       ),
-      new THREE.MeshBasicMaterial({
+      this.beamMat = new THREE.MeshBasicMaterial({
         color: 0x66ddff,
         transparent: true,
         opacity: 0.18,
         blending: THREE.AdditiveBlending,
         depthWrite: false
-      })
-    );
+      }));
 
     this.beam.position.z =
       this.radius * 0.5;
@@ -90,6 +93,17 @@ export class Scanner {
 
     this.mesh.rotation.y =
       this.rotation;
+
+    this.alertTimer = Math.max(
+      0,
+      this.alertTimer - dt
+    );
+
+    if (this.alertTimer > 0) {
+      this.beamMat.color.setHex(0xff3333);
+    } else {
+      this.beamMat.color.setHex(0x66ddff);
+    }
   }
 
   detects(position: THREE.Vector3): boolean {
@@ -130,5 +144,9 @@ export class Scanner {
 
     return sideways <
       this.beamWidth;
+  }
+
+  triggerAlert() {
+    this.alertTimer = 1.0;
   }
 }

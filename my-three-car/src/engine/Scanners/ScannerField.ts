@@ -1,5 +1,4 @@
 import * as THREE from "three";
-
 import { Scanner } from "./Scanner";
 import { CargoType, type Cargo } from "../Cargo/Cargo";
 
@@ -50,62 +49,71 @@ export class ScannerField {
   }
 
   update(dt: number) {
-
-  this.detectionCooldown =
-    Math.max(
-      0,
-      this.detectionCooldown - dt
-    );
+    this.detectionCooldown =
+      Math.max(
+        0,
+        this.detectionCooldown - dt
+      );
 
     for (const scanner of this.scanners) {
       scanner.update(dt);
     }
   }
 
-checkContrabandDetection(
-  shipPos: THREE.Vector3,
-  cargoChain: Cargo[]
-): boolean {
-
-  if (
-    this.detectionCooldown > 0
-  ) {
-    return false;
-  }
-
-  //
-  // Not in any beam
-  //
-
-  if (
-    !this.checkDetection(shipPos)
-  ) {
-    return false;
-  }
-
-  this.detectionCooldown = 5;
-
-  //
-  // Beam sees player
-  //
-
-  return cargoChain.some(
-    cargo =>
-      cargo.type ===
-      CargoType.CONTRABAND
-  );
-}
-
   checkDetection(
-  shipPos: THREE.Vector3
-): boolean {
+    position: THREE.Vector3
+  ): Scanner | null {
 
-  for (const scanner of this.scanners) {
-    if (scanner.detects(shipPos)) {
-      return true;
+    for (const scanner of this.scanners) {
+
+      if (
+        scanner.detects(position)
+      ) {
+        return scanner;
+      }
     }
+
+    return null;
   }
 
-  return false;
-}
+  checkContrabandDetection(
+    cargoChain: Cargo[]
+  ): Scanner | null {
+
+    //
+    // Prevent spam
+    //
+
+    if (this.detectionCooldown > 0) {
+      return null;
+    }
+
+    //
+    // Only contraband cargo matters
+    //
+
+    for (const cargo of cargoChain) {
+
+      if (
+        cargo.type !==
+        CargoType.CONTRABAND
+      ) {
+        continue;
+      }
+
+      const scanner =
+        this.checkDetection(
+          cargo.mesh.position
+        );
+
+      if (scanner) {
+
+        this.detectionCooldown = 5;
+
+        return scanner;
+      }
+    }
+
+    return null;
+  }
 }

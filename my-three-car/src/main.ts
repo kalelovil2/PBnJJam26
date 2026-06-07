@@ -26,6 +26,7 @@ import { Ship } from "./engine/Ship/Ship.ts";
 import { CheckpointGenerator } from "./engine/Checkpoints/CheckpointGenerator.ts";
 import { AsteroidGenerator } from "./engine/SpaceObjects/AsteroidGenerator.ts";
 import { SellZone } from "./engine/SellZone";
+import { ContrabandAlert } from "./engine/Scanners/ContrabandAlert.ts";
 
 const startMenu = new StartMenu();
 
@@ -53,6 +54,9 @@ renderer.setSize(
 renderer.setPixelRatio(window.devicePixelRatio);
 
 document.body.appendChild(renderer.domElement);
+
+const contrabandAlert =
+  new ContrabandAlert(camera);
 
 //
 // DEBUG
@@ -484,17 +488,25 @@ function animate() {
   // SCANNERS
   scannerField.update(1 / 60);
 
-  if (
+const detectingScanner =
   scannerField.checkContrabandDetection(
-    ship.mesh.position,
     cargoChain
-  )
-) {
+  );
+
+if (detectingScanner) {
+
+  detectingScanner.triggerAlert();
+
+  contrabandAlert.trigger();
+
   console.log(
     "CONTRABAND DETECTED"
   );
 }
 
+contrabandAlert.update(
+  1 / 60
+);
 
   //
   // DEBUG
@@ -529,6 +541,8 @@ function animate() {
   //
 
   ship.updateCamera(camera);
+
+  contrabandAlert.update(1 / 60);
 
   //
   // RENDER
