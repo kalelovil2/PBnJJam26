@@ -18,9 +18,9 @@ export class ScannerField {
       new Scanner(
         scene,
         new THREE.Vector3(
-          60,
           0,
-          60
+          0,
+          -20
         )
       )
     );

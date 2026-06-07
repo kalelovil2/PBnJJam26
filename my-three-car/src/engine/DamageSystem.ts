@@ -51,12 +51,12 @@ export class DamageSystem {
 
       if (o1?.type === "comet") {
         o1.ref.markForDestruction();
-        console.log("DESTROY COMET");
+        //console.log("DESTROY COMET");
       }
 
       if (o2?.type === "comet") {
         o2.ref.markForDestruction();
-        console.log("DESTROY COMET");
+        //console.log("DESTROY COMET");
       }
 
       const v1 = b1.linvel();

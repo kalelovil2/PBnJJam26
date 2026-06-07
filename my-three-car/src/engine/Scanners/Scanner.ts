@@ -1,14 +1,21 @@
 import * as THREE from "three";
+import { ScannerVisuals } from "./ScannerVisuals";
 
 export class Scanner {
   mesh: THREE.Group;
 
-  private beam: THREE.Mesh;
+  private beamGroup: THREE.Group;
+
+  private beamA: THREE.Mesh;
+  private beamB: THREE.Mesh;
+
+  private visuals: ScannerVisuals;
 
   position: THREE.Vector3;
 
   radius = 17.5;
-  beamWidth = 1.25;
+  cylinderRadius = 1.5;
+  beamWidth = 3.25;
 
   rotation = 0;
   rotationSpeed = 0.25;
@@ -16,8 +23,11 @@ export class Scanner {
   private alertTimer = 0;
 
   private beamMat: THREE.MeshBasicMaterial;
+  private coreMat!: THREE.MeshBasicMaterial;
 
   private pulseTime = 5 + Math.random() * 5;
+
+  private flickerTime = Math.random() * 100;
 
   constructor(
     scene: THREE.Scene,
@@ -27,14 +37,16 @@ export class Scanner {
 
     this.mesh = new THREE.Group();
 
+    this.visuals = new ScannerVisuals();
+
     //
     // Scanner body
     //
 
     const body = new THREE.Mesh(
       new THREE.CylinderGeometry(
-        1.5,
-        1.5,
+        this.cylinderRadius,
+        this.cylinderRadius,
         4,
         8
       ),
@@ -51,24 +63,104 @@ export class Scanner {
     // Beam
     //
 
-    this.beam = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        this.beamWidth,
-        0.5,
-        this.radius
-      ),
-      this.beamMat = new THREE.MeshBasicMaterial({
-        color: 0x66ddff,
-        transparent: true,
-        opacity: 0.18,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      }));
+    this.beamMat = new THREE.MeshBasicMaterial({
+      color: 0x77ccff,
+      map: this.visuals.createBeamTexture(),
+      transparent: true,
+      opacity: 0.2,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
 
-    this.beam.position.z =
+    const beamGeometry =
+      new THREE.PlaneGeometry(
+        this.beamWidth * 2,
+        this.radius
+      );
+
+    this.beamA = new THREE.Mesh(
+      beamGeometry,
+      this.beamMat
+    );
+
+    this.beamB = new THREE.Mesh(
+      beamGeometry,
+      this.beamMat
+    );
+
+    //
+    // PlaneGeometry length is Y,
+    // rotate so length points forward (Z)
+    //
+
+    this.beamA.rotation.x =
+      -Math.PI / 2;
+
+    this.beamB.rotation.set(
+  -Math.PI / 2,
+  Math.PI / 2,
+  0
+);
+
+    //
+    // Move both planes forward
+    //
+
+    this.beamA.position.z =
       this.radius * 0.5;
 
-    this.mesh.add(this.beam);
+    this.beamB.position.z =
+      this.radius * 0.5;
+
+    this.beamGroup =
+      new THREE.Group();
+
+    // this.beamGroup.add(
+    //   this.beamA
+    // );
+
+    this.beamGroup.add(
+      this.beamB
+    );
+
+    
+  const coreMat = new THREE.MeshBasicMaterial({
+    color: 0x99ddff,
+    transparent: true,
+    opacity: 0.05,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  })
+  this.coreMat = coreMat;
+
+    const core = new THREE.Mesh(
+  new THREE.CylinderGeometry(
+    0.95,
+    0.25,
+    this.radius,
+    8
+  ),
+  coreMat
+);
+
+core.rotation.x = Math.PI / 2;
+core.position.z = this.radius * 0.5;
+
+this.beamGroup.add(core);
+
+    const startOffset = this.cylinderRadius+0.01;
+
+this.beamGroup.position.z =
+  startOffset;
+
+    this.mesh.add(
+      this.beamGroup
+    );
+    
+
+
+
 
     //
     // Marker light
@@ -83,6 +175,25 @@ export class Scanner {
     beacon.position.y = 1.5;
 
     this.mesh.add(beacon);
+
+    // Glow Ring
+
+    const ring = new THREE.Mesh(
+  new THREE.RingGeometry(0.025, 0.25, 32),
+  new THREE.MeshBasicMaterial({
+    color: 0x66ccff,
+    transparent: true,
+    opacity: 0.05,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  })
+);
+
+ring.rotation.z = Math.PI / 2;
+ring.position.z = this.cylinderRadius;
+
+this.mesh.add(ring);
 
     this.mesh.position.copy(position);
 
@@ -109,14 +220,46 @@ export class Scanner {
 
     this.pulseTime += dt;
 
-// const pulse =
-//   0.875 +
-//   Math.sin(this.pulseTime * 0.75) * 0.125;
+    this.flickerTime += dt;
 
-const length = this.radius;// * pulse;
+    const flicker =
+      1.0 +
+      Math.sin(this.flickerTime * 2.0) * 0.1;
 
-//this.beam.scale.z = pulse;
-this.beam.position.z = length * 0.5;
+    this.beamMat.opacity =
+      0.2 * flicker;
+
+      const fadeStart = this.radius - 2.0;
+
+const fadeZone = 3.0;
+
+let coreFade = 1.0;
+
+if (this.radius > fadeZone) {
+  coreFade =
+    Math.max(
+      0,
+      (this.radius - fadeZone) / this.radius
+    );
+}
+
+coreFade = coreFade * coreFade;
+
+this.coreMat.opacity = 0.05 * coreFade;
+
+// const fade =
+//   1.0 - (Math.sin(this.pulseTime * 0.5) * 0.05);
+
+// const length = this.radius * fade;
+
+// this.beamA.scale.y = fade;
+// this.beamB.scale.y = fade;
+
+//     this.beamA.position.z =
+//       length * 0.5;
+
+//     this.beamB.position.z =
+//       length * 0.5;
   }
 
   detects(position: THREE.Vector3): boolean {
