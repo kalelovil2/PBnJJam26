@@ -25,7 +25,7 @@ export class ContrabandAlert {
         this.flash.style.position = "fixed";
         this.flash.style.inset = "0";
         this.flash.style.background = "#ff220067";
-        this.flash.style.opacity = "0.4";
+        this.flash.style.opacity = "0.3";
         this.flash.style.pointerEvents = "none";
         this.flash.style.zIndex = "99999";
 

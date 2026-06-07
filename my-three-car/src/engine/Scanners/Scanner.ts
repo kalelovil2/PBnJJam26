@@ -7,8 +7,8 @@ export class Scanner {
 
   position: THREE.Vector3;
 
-  radius = 60;
-  beamWidth = 2;
+  radius = 17.5;
+  beamWidth = 1.25;
 
   rotation = 0;
   rotationSpeed = 0.25;
@@ -16,6 +16,8 @@ export class Scanner {
   private alertTimer = 0;
 
   private beamMat: THREE.MeshBasicMaterial;
+
+  private pulseTime = 5 + Math.random() * 5;
 
   constructor(
     scene: THREE.Scene,
@@ -104,6 +106,17 @@ export class Scanner {
     } else {
       this.beamMat.color.setHex(0x66ddff);
     }
+
+    this.pulseTime += dt;
+
+// const pulse =
+//   0.875 +
+//   Math.sin(this.pulseTime * 0.75) * 0.125;
+
+const length = this.radius;// * pulse;
+
+//this.beam.scale.z = pulse;
+this.beam.position.z = length * 0.5;
   }
 
   detects(position: THREE.Vector3): boolean {
