@@ -477,7 +477,7 @@ function animate() {
   //
 
   for (const asteroid of asteroids) {
-    asteroid.update();
+    asteroid.update(ship.mesh.position);
   }
 
   cometField.update(ship.mesh.position);

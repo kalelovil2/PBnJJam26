@@ -16,7 +16,16 @@ static asteroidBump = this.createAsteroidBumpMap();
             bumpMap: this.asteroidBump,
             bumpScale: 1.25,
             flatShading: true,
-            roughness: 1
+            roughness: 1,
+        });
+        static fadedAsteroidMaterial = new THREE.MeshStandardMaterial({
+            map: this.asteroidTexture,
+            bumpMap: this.asteroidBump,
+            bumpScale: 1.25,
+            flatShading: true,
+            roughness: 1,
+            transparent: true,
+            opacity: 0.275,
         });
 
     static createAsteroids(scene: THREE.Scene) {
@@ -72,7 +81,8 @@ static asteroidBump = this.createAsteroidBumpMap();
 
             this.asteroidPositions.push(mesh.position.clone());
 
-            asteroids.push(new Asteroid(mesh, body, planeY));
+            asteroids.push(new Asteroid(mesh, body, planeY, 
+                this.asteroidMaterial, this.fadedAsteroidMaterial));
         }
 
         return asteroids;
@@ -343,7 +353,7 @@ function sampleAsteroidY() {
     const bands = [-8, 0, 8];
 
     // middle lane more common
-    const weights = [1, 5, 1];
+    const weights = [2.5, 5, 2.5];
 
     const totalWeight = weights.reduce((a, b) => a + b, 0);
 
