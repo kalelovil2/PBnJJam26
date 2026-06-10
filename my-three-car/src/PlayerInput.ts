@@ -58,7 +58,8 @@ export class PlayerInput {
         // -----------------------------
         // 1. throttle (simple radial control)
         // -----------------------------
-        const dist = Math.min(1, this.mouse.length());
+        const dist = Math.min(1, this.mouse.length()*2);
+        console.log("Input dist: ", dist);
 
         const deadzone = 0.15;
 

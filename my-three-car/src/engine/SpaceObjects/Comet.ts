@@ -22,7 +22,7 @@ export class Comet {
 
     private lockedY = 0;
 
-    constructor(scene: THREE.Scene) {
+    constructor(scene: THREE.Scene, position: THREE.Vector3, rotation: THREE.Vector3) {
         //
         // SMALL ROCKY SHAPE
         //
@@ -66,9 +66,6 @@ export class Comet {
         });
 
         this.trailGlowMesh = new THREE.Mesh(this.trailGlowGeo, this.trailGlowMat);
-        scene.add(this.trailGlowMesh);
-
-        scene.add(this.mesh);
 
         this.scene = scene;
 
@@ -105,6 +102,10 @@ export class Comet {
         this.collider.setRestitution(0.05);
         this.collider.setFriction(0.0);
 
+        this.spawn(position, rotation);
+
+        scene.add(this.trailGlowMesh);
+        scene.add(this.mesh);
     }
 
     spawn(position: THREE.Vector3, direction: THREE.Vector3) {

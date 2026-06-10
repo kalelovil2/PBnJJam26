@@ -14,21 +14,6 @@ export class CometField {
   ) {
     this.scene = scene;
     this.targetCount = count;
-
-    for (let i = 0; i < count; i++) {
-      const comet = new Comet(scene);
-
-      this.comets.push(comet);
-
-      comet.spawn(
-        new THREE.Vector3(
-          (Math.random() - 0.5) * 200,
-          0,
-          (Math.random() - 0.5) * 200
-        ),
-        this.randomDirection()
-      );
-    }
   }
 
   update(playerPos: THREE.Vector3) {
@@ -65,7 +50,6 @@ export class CometField {
     // REFILL FIELD
     //
     while (this.comets.length < this.targetCount) {
-      const comet = new Comet(this.scene);
 
       const angle =
         Math.random() * Math.PI * 2;
@@ -79,11 +63,7 @@ export class CometField {
         playerPos.z + Math.sin(angle) * radius
       );
 
-      comet.spawn(
-        spawnPos,
-        this.randomDirection()
-      );
-
+      const comet = new Comet(this.scene, spawnPos, this.randomDirection());
       this.comets.push(comet);
     }
   }
