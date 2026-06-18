@@ -6,7 +6,7 @@ export const ASTEROID_SAFE_RADIUS = 15;
 
 export const ASTEROID_COUNT = 250;
 export const COMET_COUNT = 80;
-export const THRUSTER_COUNT = 60;
+export const THRUSTER_COUNT = 25;
 
 export const CHECKPOINT_COUNT = 10;
 
