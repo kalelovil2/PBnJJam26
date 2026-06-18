@@ -23,12 +23,14 @@ import { CargoGenerator } from "./engine/Cargo/CargoGenerator.ts";
 import { PhysicsDebug } from "./engine/PhysicsDebug.ts";
 import { DamageSystem } from "./engine/DamageSystem.ts";
 import { ShipHeadlightSystem } from "./engine/Ship/ShipHeadlightSystem.ts";
-import { ASTEROID_COUNT, CARGO_COUNT, CHECKPOINT_COUNT, COMET_COUNT, LEVEL_SIZE, PLAYER_START } from "./GameConfig.ts";
+import { ASTEROID_COUNT, CARGO_COUNT, CHECKPOINT_COUNT, COMET_COUNT, LEVEL_SIZE, PLAYER_START, THRUSTER_COUNT } from "./GameConfig.ts";
 import { Ship } from "./engine/Ship/Ship.ts";
 import { CheckpointGenerator } from "./engine/Checkpoints/CheckpointGenerator.ts";
 import { AsteroidGenerator } from "./engine/SpaceObjects/AsteroidGenerator.ts";
 import { SellZone } from "./engine/SellZone";
 import { ContrabandAlert } from "./engine/Scanners/ContrabandAlert.ts";
+import type { ThrusterPickup } from "./engine/Thrusters/ThrusterPickup.ts";
+import { ThrusterField } from "./engine/Thrusters/ThrusterField.ts";
 
 const startMenu = new StartMenu();
 
@@ -188,6 +190,8 @@ const asteroids =
   );
 
 const cometField = new CometField(scene, COMET_COUNT);
+
+const thrusterField = new ThrusterField(scene, THRUSTER_COUNT);
 //
 // CHECKPOINTS
 //
@@ -404,6 +408,51 @@ function tryAttachCargo() {
   }
 }
 
+function tryAttachThrusters() {
+
+  if (!ship?.body) {
+    return;
+  }
+
+  for (const thruster of thrusterField.thrusters) {
+
+    if (
+      thruster.attached ||
+      thruster.isSpent
+    ) {
+      continue;
+    }
+
+    const thrusterPos =
+      thruster.body.translation();
+
+    const shipPos =
+      ship.body.translation();
+
+    const dx = thrusterPos.x - shipPos.x;
+    const dz = thrusterPos.z - shipPos.z;
+
+    const distSq =
+      dx * dx +
+      dz * dz;
+
+    if (distSq > 36) {
+      continue;
+    }
+
+    thruster.attachToShip(
+      ship,
+      ship.attachedThrusters.length
+    );
+
+    ship.attachedThrusters.push(
+      thruster
+    );
+
+    break;
+  }
+}
+
 //
 // MAIN LOOP
 //
@@ -419,11 +468,24 @@ function animate() {
     playerInput.update(camera, ship);
   ship.updateControls(playerInput);
 
+  if (ship.isAccelerating()) {
+
+  for (
+    const thruster
+    of ship.attachedThrusters
+  ) {
+    thruster.consumeFuel(1 / 60);
+  }
+}
+
   //
   // PICKUPS
   //
 
   tryAttachCargo();
+  tryAttachThrusters();
+
+  thrusterField.update(1 / 60);
 
   //
   // TRAILER FOLLOWING

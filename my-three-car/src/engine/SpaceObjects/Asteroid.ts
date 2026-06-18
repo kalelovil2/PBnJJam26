@@ -59,10 +59,10 @@ export class Asteroid {
       this.mesh.position.y - shipPosition.y
     );
 
-    console.log("Asteroid Pos: ", yOffset);
+    //console.log("Asteroid Pos: ", yOffset);
 
     (this.mesh as THREE.Mesh).material = yOffset < 1 
       ? this.solidRockMaterial : this.fadedRockMaterial;
-    console.log("Asteroid Opacity: ", ((this.mesh as THREE.Mesh).material as THREE.Material).opacity)
+    //console.log("Asteroid Opacity: ", ((this.mesh as THREE.Mesh).material as THREE.Material).opacity)
   }
 }

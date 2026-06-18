@@ -4,6 +4,7 @@ import { ThrusterParticle } from "./ThrusterParticle";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { getWorld } from "../../physics";
 import { PlayerInput } from "../../PlayerInput";
+import type { ThrusterPickup } from "../Thrusters/ThrusterPickup";
 
 const INPUT_X_RIGHT = -1;
 
@@ -37,6 +38,24 @@ export class Ship {
   particles: ThrusterParticle[] = [];
 
   cameraMode = 0;
+
+  attachedThrusters: ThrusterPickup[] = [];
+
+  throttle = 0;
+
+  getThrusterMultiplier() {
+    let bonus = 0;
+
+    for (
+      const thruster
+      of this.attachedThrusters
+    ) {
+      bonus +=
+        thruster.getThrustBonus();
+    }
+
+    return 1 + bonus;
+  }
 
   createThruster(material: THREE.Material, isLarge: boolean = false) {
     const mesh = new THREE.Mesh(
@@ -165,6 +184,12 @@ export class Ship {
     this.mesh.add(this.rightRear);
   }
 
+  isAccelerating() {
+    return Math.abs(
+      this.throttle
+    ) > 0.05;
+  }
+
   updateControls(playerInput: PlayerInput) {
     if (!this.initialized) return;
 
@@ -180,7 +205,9 @@ export class Ship {
     reset(this.rightFront);
     reset(this.rightRear);
 
-    const thrust = 0.05;
+    const thrust =
+      0.05 *
+      this.getThrusterMultiplier();
     const turnTorque = 0.0175;
 
     // IMPORTANT:
@@ -202,44 +229,44 @@ export class Ship {
     // THRUST (W/S)
     // -------------------------
 
-// keyboard input
-const keyboardThrottle =
-  (this.keys["w"] ? 1 : 0) +
-  (this.keys["s"] ? -1 : 0);
+    // keyboard input
+    const keyboardThrottle =
+      (this.keys["w"] ? 1 : 0) +
+      (this.keys["s"] ? -1 : 0);
 
-// mouse/touch input
-const mouseThrottle = playerInput.throttle ?? 0;
+    // mouse/touch input
+    const mouseThrottle = playerInput.throttle ?? 0;
 
-// IMPORTANT: do NOT stack — choose dominant input
-    const throttle = Math.abs(mouseThrottle) > 0.05 && playerInput.mouseDown
-  ? mouseThrottle
-  : keyboardThrottle;
+    // IMPORTANT: do NOT stack — choose dominant input
+    this.throttle = Math.abs(mouseThrottle) > 0.05 && playerInput.mouseDown
+      ? mouseThrottle
+      : keyboardThrottle;
 
 
-// APPLY FORWARD / REVERSE
-if (throttle !== 0) {
-  this.body.applyImpulse(
-    {
-      x: forward.x * thrust * throttle,
-      y: 0,
-      z: forward.z * thrust * throttle
-    },
-    false
-  );
-}
+    // APPLY FORWARD / REVERSE
+    if (this.throttle !== 0) {
+      this.body.applyImpulse(
+        {
+          x: forward.x * thrust * this.throttle,
+          y: 0,
+          z: forward.z * thrust * this.throttle
+        },
+        false
+      );
+    }
 
-if (throttle > 0) {
-  (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
-  (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+    if (this.throttle > 0) {
+      (this.mainForwardLeft.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
+      (this.mainForwardRight.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.5;
 
-  this.spawnThrusterParticles(this.mainForwardLeft, 4, 0.1);
-  this.spawnThrusterParticles(this.mainForwardRight, 4, 0.1);
-}
+      this.spawnThrusterParticles(this.mainForwardLeft, 4, 0.1);
+      this.spawnThrusterParticles(this.mainForwardRight, 4, 0.1);
+    }
 
-if (throttle < 0) {
-  (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
-  this.spawnThrusterParticles(this.mainReverse, 2, 0.06);
-}
+    if (this.throttle < 0) {
+      (this.mainReverse.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5;
+      this.spawnThrusterParticles(this.mainReverse, 2, 0.06);
+    }
 
     // -------------------------
     // STRAFE (Q/E)
